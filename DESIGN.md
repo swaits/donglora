@@ -47,10 +47,14 @@ radio — it just gives you clean access to it.
 9. **Easy board support.** Adding a new board means dropping a `.rs` file and adding
    a Cargo feature. Nothing else changes.
 
-10. **Standard toolchain only.** No custom Rust forks, no `espup`, no special SDKs.
-    If a board can't build with stock `rustup`, it doesn't ship. This rules out
-    Xtensa-based ESP32 chips (S2, S3) until upstream Rust fully supports them.
-    RISC-V ESP32 variants (C3, C6, H2) are fine.
+10. **Support all common LoRa boards.** This project supports every common LoRa
+    board, and even some uncommon ones. The architecture is designed to accommodate
+    them cleanly. If the code isn't structured for a new board, fix the code.
+
+11. **Standard toolchain.** No custom Rust forks or special SDKs. Use stock `rustup`
+    channels (stable, nightly). Xtensa targets use nightly + `-Zbuild-std`; Cortex-M
+    and RISC-V targets use stable. Boards that need the `esp` toolchain (via `espup`)
+    are supported but gracefully skipped when the toolchain isn't installed.
 
 ## Architecture
 
@@ -96,4 +100,5 @@ keep, but never prematurely.
 | Boot behavior | Idle until host commands | Host-driven principle |
 | Persistence | None | Always start fresh, true dumb pipe |
 | Board codegen | Jinja2 via build.rs | Auto-discovers boards from filesystem |
-| Rust toolchain | Standard `rustup` only | No forks, no espup, no special SDKs |
+| Rust toolchain | Stock `rustup` (stable/nightly) | No forks; `espup` for Xtensa boards only |
+| Firmware output | `firmware/lora-dongle-{board}-{profile}.elf` | Readable names, not buried in `target/` |

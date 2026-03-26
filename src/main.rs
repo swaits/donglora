@@ -15,6 +15,8 @@ use crate::channel::{CommandChannel, ResponseChannel, StatusWatch};
 cfg_if::cfg_if! {
     if #[cfg(feature = "rak_4631")] {
         use panic_probe as _;
+    } else if #[cfg(feature = "heltec_v3")] {
+        use esp_backtrace as _;
     }
 }
 

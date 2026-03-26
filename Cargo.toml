@@ -19,6 +19,12 @@ postcard = { version = "1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 static_cell = "2.1"
 
+# ESP32-S3 (Heltec V3) — builds with nightly + -Zbuild-std=core
+esp-backtrace = { version = "0.14", optional = true, features = ["esp32s3", "panic-handler", "defmt"] }
+esp-hal = { version = "0.22", optional = true, features = ["esp32s3"] }
+esp-hal-embassy = { version = "0.5", optional = true, features = ["esp32s3"] }
+esp-println = { version = "0.12", optional = true, features = ["esp32s3", "defmt-espflash"] }
+
 # nRF52840 (RAK 4631)
 cortex-m-rt = { version = "0.7", optional = true }
 embassy-nrf = { version = "0.2", optional = true, features = ["nrf52840", "gpiote", "time-driver-rtc1", "defmt"] }
@@ -29,6 +35,12 @@ minijinja = "2.0"
 owo-colors = "4.0"
 
 [features]
+heltec_v3 = [
+    "dep:esp-backtrace",
+    "dep:esp-hal",
+    "dep:esp-hal-embassy",
+    "dep:esp-println",
+]
 rak_4631 = [
     "dep:cortex-m-rt",
     "dep:embassy-nrf",

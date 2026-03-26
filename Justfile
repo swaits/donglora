@@ -1,32 +1,82 @@
 set shell := ["bash", "-c"]
-rak_4631 := "rak_4631 thumbv7em-none-eabihf nRF52840_xxAA"
 
-# Check all boards compile cleanly
+# Board definitions: feature target chip [extra-cargo-args]
+# Boards requiring the esp toolchain are marked — check-all skips them gracefully
+# if the toolchain isn't installed.
+heltec_v3 := "heltec_v3 xtensa-esp32s3-none-elf esp32s3"
+rak_4631  := "rak_4631 thumbv7em-none-eabihf nRF52840_xxAA"
+
+firmware_dir := "firmware"
+
+# All known boards
+boards := "heltec_v3 rak_4631"
+
+# Check all boards that can build with the available toolchain
 check-all:
-    just check rak_4631
+    @for board in {{boards}}; do \
+        if just _can_build $board 2>/dev/null; then \
+            echo "── checking $board ──"; \
+            just check $board; \
+        else \
+            echo "── skipping $board (toolchain not available) ──"; \
+        fi; \
+    done
 
 # Check a single board compiles
 check board:
-    @read -r feat target chip <<< "$(just _info {{board}})"; \
-    cargo check --target $target --features $feat
+    @just _cargo {{board}} check
 
 # Run clippy on a single board
 clippy board:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    cargo clippy --target $target --features $feat -- -D warnings
+    tc=""; \
+    case "$target" in xtensa-*) tc="+esp" ;; esac; \
+    cargo $tc clippy --target $target --features $feat -- -D warnings
+
+# Build release firmware and copy to firmware/ with a readable name
+build board profile="release":
+    @just _cargo {{board}} "build --{{profile}}"
+    @just _copy_firmware {{board}} {{profile}}
 
 # Build and flash a board via probe-rs
 flash board:
+    @just build {{board}} release
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    cargo build --release --target $target --features $feat; \
-    probe-rs run --chip $chip --target $target --features $feat
+    probe-rs run --chip $chip "{{firmware_dir}}/lora-dongle-{{board}}-release.elf"
 
 # Show binary size for a release build
 size board:
+    @just _cargo {{board}} "size --release"
+
+# ── Private helpers ───────────────────────────────────────────────────
+
+# Run a cargo command for a board, using +esp toolchain for Xtensa targets
+[private]
+_cargo board cmd:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    cargo size --release --target $target --features $feat
+    tc=""; \
+    case "$target" in xtensa-*) tc="+esp" ;; esac; \
+    cargo $tc {{cmd}} --target $target --features $feat
+
+# Check if a board's toolchain is available
+[private]
+_can_build board:
+    @read -r feat target chip <<< "$(just _info {{board}})"; \
+    case "$target" in \
+        xtensa-*) rustup toolchain list | grep -q "^esp" ;; \
+        *) rustup target list --installed | grep -q "^$target$" || rustup target add "$target" >/dev/null 2>&1 ;; \
+    esac
+
+[private]
+_copy_firmware board profile:
+    @mkdir -p {{firmware_dir}}
+    @read -r feat target chip <<< "$(just _info {{board}})"; \
+    src="target/$target/{{profile}}/lora-dongle"; \
+    dst="{{firmware_dir}}/lora-dongle-{{board}}-{{profile}}"; \
+    if [ -f "$src" ]; then cp "$src" "$dst.elf"; echo "→ $dst.elf"; fi
 
 [private]
 _info name:
-    @if [ "{{name}}" == "rak_4631" ]; then echo "{{rak_4631}}"; \
+    @if [ "{{name}}" == "heltec_v3" ]; then echo "{{heltec_v3}}"; \
+     elif [ "{{name}}" == "rak_4631" ]; then echo "{{rak_4631}}"; \
      else echo "Unknown board: {{name}}" >&2; exit 1; fi
