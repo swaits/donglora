@@ -54,7 +54,7 @@ heltec_v4 = [
     "dep:esp-hal-embassy",
     "dep:esp-println",
 ]
-rak_4631 = [
+rak_wisblock_4631 = [
     "dep:cortex-m-rt",
     "dep:embassy-nrf",
     "dep:panic-probe",

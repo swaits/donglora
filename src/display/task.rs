@@ -11,10 +11,12 @@ use crate::channel::{DisplayCommand, DisplayCommandChannel, StatusWatch};
 
 use super::render::{self, RSSI_HISTORY_LEN};
 
-const BOARD_NAME: &str = if cfg!(feature = "rak_4631") {
-    "rak_4631"
+const BOARD_NAME: &str = if cfg!(feature = "rak_wisblock_4631") {
+    "RAK WisBlock 4631"
 } else if cfg!(feature = "heltec_v3") {
-    "heltec_v3"
+    "Heltec v3"
+} else if cfg!(feature = "heltec_v4") {
+    "Heltec v4"
 } else {
     "unknown"
 };

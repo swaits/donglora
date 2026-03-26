@@ -13,7 +13,7 @@ use embassy_executor::Spawner;
 use crate::channel::{CommandChannel, DisplayCommandChannel, ResponseChannel, StatusWatch};
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "rak_4631")] {
+    if #[cfg(feature = "rak_wisblock_4631")] {
         use panic_probe as _;
     } else if #[cfg(any(feature = "heltec_v3", feature = "heltec_v4"))] {
         use esp_backtrace as _;
@@ -27,7 +27,7 @@ static DISPLAY_COMMANDS: DisplayCommandChannel = DisplayCommandChannel::new();
 
 // Entry point: each platform needs its own executor macro.
 cfg_if::cfg_if! {
-    if #[cfg(feature = "rak_4631")] {
+    if #[cfg(feature = "rak_wisblock_4631")] {
         #[embassy_executor::main]
         async fn main(spawner: Spawner) {
             run(spawner).await;
