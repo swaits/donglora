@@ -12,12 +12,25 @@ firmware_dir := "firmware"
 # All known boards
 boards := "heltec_v3 heltec_v4 rak_wisblock_4631"
 
+# Build release firmware for all boards with available toolchains
+build-all:
+    @trap 'exit 130' INT; \
+    for board in {{boards}}; do \
+        if just _can_build $board 2>/dev/null; then \
+            echo "── building $board ──"; \
+            just build $board || exit $?; \
+        else \
+            echo "── skipping $board (toolchain not available) ──"; \
+        fi; \
+    done
+
 # Check all boards that can build with the available toolchain
 check-all:
-    @for board in {{boards}}; do \
+    @trap 'exit 130' INT; \
+    for board in {{boards}}; do \
         if just _can_build $board 2>/dev/null; then \
             echo "── checking $board ──"; \
-            just check $board; \
+            just check $board || exit $?; \
         else \
             echo "── skipping $board (toolchain not available) ──"; \
         fi; \
@@ -31,7 +44,10 @@ check board:
 clippy board:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     env=""; extra=""; \
-    case "$target" in xtensa-*) env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; esac; \
+    case "$target" in xtensa-*) \
+        [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
+        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
+    esac; \
     eval $env cargo $extra clippy --target $target --features $feat -- -D warnings
 
 # Build release firmware and copy to firmware/ with a readable name
@@ -57,7 +73,10 @@ size board:
 _cargo board cmd:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     env=""; extra=""; \
-    case "$target" in xtensa-*) env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; esac; \
+    case "$target" in xtensa-*) \
+        [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
+        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
+    esac; \
     eval $env cargo $extra {{cmd}} --target $target --features $feat
 
 # Check if a board's toolchain is available
