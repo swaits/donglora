@@ -4,10 +4,6 @@ use serde::{Deserialize, Serialize};
 /// Maximum LoRa payload size in bytes.
 pub const MAX_PAYLOAD: usize = 256;
 
-/// Protocol version for host compatibility checks.
-#[allow(dead_code)]
-pub const PROTOCOL_VERSION: u8 = 1;
-
 /// LoRa signal bandwidth.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 #[repr(u8)]

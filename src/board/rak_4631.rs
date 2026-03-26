@@ -18,10 +18,6 @@ bind_interrupts!(struct Irqs {
     SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0 => embassy_nrf::twim::InterruptHandler<embassy_nrf::peripherals::TWISPI0>;
 });
 
-/// Board name shown on the display dashboard.
-#[allow(dead_code)]
-pub const BOARD_NAME: &str = "RAK 4631";
-
 // ── Concrete peripheral types ────────────────────────────────────────
 
 type SpiBus = Spim<'static, embassy_nrf::peripherals::SPI3>;

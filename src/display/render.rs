@@ -1,4 +1,4 @@
-use crate::channel::{RadioState, RadioStatus};
+use crate::channel::RadioStatus;
 
 /// Render the status dashboard to a framebuffer.
 ///
@@ -12,14 +12,4 @@ pub fn dashboard(status: &RadioStatus) {
     //   Line 4: RX count / TX count
     //   Line 5: last RSSI / SNR
     let _ = status;
-}
-
-/// Format radio state as a short display string.
-#[allow(dead_code)]
-pub fn state_label(state: RadioState) -> &'static str {
-    match state {
-        RadioState::Idle => "IDLE",
-        RadioState::Receiving => "RX",
-        RadioState::Transmitting => "TX",
-    }
 }

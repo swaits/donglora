@@ -37,8 +37,8 @@ radio — it just gives you clean access to it.
 6. **Minimal footprint.** Avoid heavy dependencies. Keep the binary small. Every
    dependency must justify its inclusion.
 
-7. **Auto-detect peripherals.** If the board has a display, use it. No user
-   configuration required.
+7. **Auto-detect peripherals.** If the board has a display, keyboard, or sensors,
+   use them. No user configuration required.
 
 8. **World-class Rust.** Fully leverage the type system for safety. Strict `no_std`.
    Always clippy-clean. Thoughtfully designed — everything has an obvious home.
@@ -46,6 +46,11 @@ radio — it just gives you clean access to it.
 
 9. **Easy board support.** Adding a new board means dropping a `.rs` file and adding
    a Cargo feature. Nothing else changes.
+
+10. **Standard toolchain only.** No custom Rust forks, no `espup`, no special SDKs.
+    If a board can't build with stock `rustup`, it doesn't ship. This rules out
+    Xtensa-based ESP32 chips (S2, S3) until upstream Rust fully supports them.
+    RISC-V ESP32 variants (C3, C6, H2) are fine.
 
 ## Architecture
 
@@ -63,6 +68,23 @@ usb_task ──Command──► radio_task ──► SX1262
 Each task exclusively owns its peripheral. No shared state except typed channels and
 a watch signal. Pure actor model.
 
+## Peripheral Model
+
+Boards can have optional peripherals beyond the radio and USB. The board's
+`into_parts()` returns `Option<T>` slots for each, and the corresponding task is
+only spawned when present.
+
+| Peripheral | Slot | Task | Examples |
+|---|---|---|---|
+| Display | `Option<DisplayParts>` | `display_task` | SSD1306 OLED, ST7789 TFT |
+| Input | `Option<InputParts>` | `input_task` | T-Deck keyboard, buttons |
+| Telemetry | `Option<TelemetryParts>` | `telemetry_task` | Battery voltage, temperature |
+
+**Board files are always separate.** A T-Deck is `t_deck.rs`, not a variant of
+Heltec V3. Each board owns its own init code and pin mappings. Shared logic between
+boards that use the same MCU can be factored into helper modules if it earns its
+keep, but never prematurely.
+
 ## Technical Decisions
 
 | Decision | Choice | Why |
@@ -74,3 +96,4 @@ a watch signal. Pure actor model.
 | Boot behavior | Idle until host commands | Host-driven principle |
 | Persistence | None | Always start fresh, true dumb pipe |
 | Board codegen | Jinja2 via build.rs | Auto-discovers boards from filesystem |
+| Rust toolchain | Standard `rustup` only | No forks, no espup, no special SDKs |
