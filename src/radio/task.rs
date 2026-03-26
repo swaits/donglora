@@ -66,6 +66,9 @@ pub async fn radio_task(
                 // TODO: put lora radio into standby
                 status.sender().send(state.clone());
             }
+            Command::DisplayOn | Command::DisplayOff => {
+                // Routed by usb_task to display — should never reach radio.
+            }
             Command::Transmit { config, payload } => {
                 let tx_config = config.or(state.config);
                 if let Some(_cfg) = tx_config {

@@ -55,6 +55,8 @@ pub enum Command {
         config: Option<RadioConfig>,
         payload: Vec<u8, MAX_PAYLOAD>,
     },
+    DisplayOn,
+    DisplayOff,
 }
 
 /// Firmware → host responses.
@@ -70,6 +72,7 @@ pub enum Response {
         payload: Vec<u8, MAX_PAYLOAD>,
     },
     TxDone,
+    Ok,
     Error(ErrorCode),
 }
 
@@ -82,4 +85,5 @@ pub enum ErrorCode {
     TxTimeout = 3,
     CrcError = 4,
     NotConfigured = 5,
+    NoDisplay = 6,
 }
