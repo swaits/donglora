@@ -1,8 +1,8 @@
 set shell := ["bash", "-c"]
 
 # Board definitions: feature target chip
-# Xtensa targets require the esp toolchain (espup); check-all gracefully skips
-# boards whose toolchain isn't installed.
+# Xtensa targets use nightly cargo + esp rustc + -Zbuild-std=core.
+# check-all gracefully skips boards whose toolchain isn't installed.
 heltec_v3 := "heltec_v3 xtensa-esp32s3-none-elf esp32s3"
 rak_4631  := "rak_4631 thumbv7em-none-eabihf nRF52840_xxAA"
 
@@ -29,9 +29,9 @@ check board:
 # Run clippy on a single board
 clippy board:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    tc=""; \
-    case "$target" in xtensa-*) tc="+esp" ;; esac; \
-    cargo $tc clippy --target $target --features $feat -- -D warnings
+    env=""; extra=""; \
+    case "$target" in xtensa-*) env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; esac; \
+    eval $env cargo $extra clippy --target $target --features $feat -- -D warnings
 
 # Build release firmware and copy to firmware/ with a readable name
 build board profile="release":
@@ -50,13 +50,14 @@ size board:
 
 # ── Private helpers ───────────────────────────────────────────────────
 
-# Run a cargo command for a board, using +esp toolchain for Xtensa targets
+# Run a cargo command for a board.
+# Xtensa: nightly cargo + esp rustc (via RUSTC override) + -Zbuild-std=core
 [private]
 _cargo board cmd:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    tc=""; \
-    case "$target" in xtensa-*) tc="+esp" ;; esac; \
-    cargo $tc {{cmd}} --target $target --features $feat
+    env=""; extra=""; \
+    case "$target" in xtensa-*) env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; esac; \
+    eval $env cargo $extra {{cmd}} --target $target --features $feat
 
 # Check if a board's toolchain is available
 [private]

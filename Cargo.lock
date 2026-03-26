@@ -1362,11 +1362,11 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "3.5.0"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
+checksum = "8ecf48c7ca261d60b74ab1a7b20da18bede46776b2e55535cb958eb595c5fa7b"
 dependencies = [
- "toml_edit 0.25.8+spec-1.1.0",
+ "toml_edit",
 ]
 
 [[package]]
@@ -1720,8 +1720,8 @@ checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
 dependencies = [
  "serde",
  "serde_spanned",
- "toml_datetime 0.6.11",
- "toml_edit 0.22.27",
+ "toml_datetime",
+ "toml_edit",
 ]
 
 [[package]]
@@ -1734,15 +1734,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "toml_datetime"
-version = "1.1.0+spec-1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97251a7c317e03ad83774a8752a7e81fb6067740609f75ea2b585b569a59198f"
-dependencies = [
- "serde_core",
-]
-
-[[package]]
 name = "toml_edit"
 version = "0.22.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1751,30 +1742,9 @@ dependencies = [
  "indexmap",
  "serde",
  "serde_spanned",
- "toml_datetime 0.6.11",
+ "toml_datetime",
  "toml_write",
- "winnow 0.7.15",
-]
-
-[[package]]
-name = "toml_edit"
-version = "0.25.8+spec-1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16bff38f1d86c47f9ff0647e6838d7bb362522bdf44006c7068c2b1e606f1f3c"
-dependencies = [
- "indexmap",
- "toml_datetime 1.1.0+spec-1.1.0",
- "toml_parser",
- "winnow 1.0.0",
-]
-
-[[package]]
-name = "toml_parser"
-version = "1.1.0+spec-1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2334f11ee363607eb04df9b8fc8a13ca1715a72ba8662a26ac285c98aabb4011"
-dependencies = [
- "winnow 1.0.0",
+ "winnow",
 ]
 
 [[package]]
@@ -1910,15 +1880,6 @@ name = "winnow"
 version = "0.7.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
-dependencies = [
- "memchr",
-]
-
-[[package]]
-name = "winnow"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a90e88e4667264a994d34e6d1ab2d26d398dcdca8b7f52bec8668957517fc7d8"
 dependencies = [
  "memchr",
 ]
