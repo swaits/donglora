@@ -50,6 +50,7 @@ impl Board {
     pub fn init() -> Self {
         let mut p = esp_hal::init(esp_hal::Config::default());
 
+        // Init embassy time driver before consuming peripherals
         let timg0 = TimerGroup::new(core::mem::replace(
             &mut p.TIMG0,
             unsafe { esp_hal::peripherals::TIMG0::steal() },
@@ -62,8 +63,8 @@ impl Board {
     pub fn into_parts(self) -> (RadioParts, UsbParts, Option<DisplayParts>) {
         let p = self.p;
 
-        // ── Vext power: GPIO21, active LOW to enable OLED ──────────
-        let _vext = Output::new(p.GPIO21, Level::Low);
+        // ── Vext power: GPIO36, active HIGH to enable OLED ─────────
+        let _vext = Output::new(p.GPIO36, Level::High);
 
         // ── DMA for SPI ────────────────────────────────────────────
         let dma = Dma::new(p.DMA);
@@ -124,7 +125,11 @@ impl Board {
             ),
         };
 
-        // ── Display (optional SSD1306 OLED on I2C, 0x3C) ──────────
+        // ── Display (optional SSD1315 OLED on I2C, 0x3C) ──────────
+        // Reset display controller via GPIO21
+        let mut display_rst = Output::new(p.GPIO21, Level::Low);
+        display_rst.set_high();
+
         // Always provide I2C; display_task detects presence via SSD1306 init.
         let i2c = I2c::new(p.I2C0, I2cConfig::default())
             .with_sda(p.GPIO17)

@@ -15,7 +15,7 @@ use crate::channel::{CommandChannel, DisplayCommandChannel, ResponseChannel, Sta
 cfg_if::cfg_if! {
     if #[cfg(feature = "rak_4631")] {
         use panic_probe as _;
-    } else if #[cfg(feature = "heltec_v3")] {
+    } else if #[cfg(any(feature = "heltec_v3", feature = "heltec_v4"))] {
         use esp_backtrace as _;
     }
 }
@@ -25,8 +25,22 @@ static RESPONSES: ResponseChannel = ResponseChannel::new();
 static STATUS: StatusWatch = StatusWatch::new();
 static DISPLAY_COMMANDS: DisplayCommandChannel = DisplayCommandChannel::new();
 
-#[embassy_executor::main]
-async fn main(spawner: Spawner) {
+// Entry point: each platform needs its own executor macro.
+cfg_if::cfg_if! {
+    if #[cfg(feature = "rak_4631")] {
+        #[embassy_executor::main]
+        async fn main(spawner: Spawner) {
+            run(spawner).await;
+        }
+    } else if #[cfg(any(feature = "heltec_v3", feature = "heltec_v4"))] {
+        #[esp_hal_embassy::main]
+        async fn main(spawner: Spawner) {
+            run(spawner).await;
+        }
+    }
+}
+
+async fn run(spawner: Spawner) {
     let board = board::Board::init();
     let (radio, usb, display) = board.into_parts();
 

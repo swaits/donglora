@@ -4,12 +4,13 @@ set shell := ["bash", "-c"]
 # Xtensa targets use nightly cargo + esp rustc + -Zbuild-std=core.
 # check-all gracefully skips boards whose toolchain isn't installed.
 heltec_v3 := "heltec_v3 xtensa-esp32s3-none-elf esp32s3"
+heltec_v4 := "heltec_v4 xtensa-esp32s3-none-elf esp32s3"
 rak_4631  := "rak_4631 thumbv7em-none-eabihf nRF52840_xxAA"
 
 firmware_dir := "firmware"
 
 # All known boards
-boards := "heltec_v3 rak_4631"
+boards := "heltec_v3 heltec_v4 rak_4631"
 
 # Check all boards that can build with the available toolchain
 check-all:
@@ -79,5 +80,6 @@ _copy_firmware board profile:
 [private]
 _info name:
     @if [ "{{name}}" == "heltec_v3" ]; then echo "{{heltec_v3}}"; \
+     elif [ "{{name}}" == "heltec_v4" ]; then echo "{{heltec_v4}}"; \
      elif [ "{{name}}" == "rak_4631" ]; then echo "{{rak_4631}}"; \
      else echo "Unknown board: {{name}}" >&2; exit 1; fi

@@ -103,7 +103,8 @@ impl Board {
         };
 
         // ── Display (optional RAK1921 SSD1306 OLED on I2C) ──────
-        // TODO: probe I2C address 0x3C to detect presence
+        // Always provide the I2C bus; display_task detects presence
+        // via SSD1306 init (fails gracefully if no display attached).
         let i2c_cfg = twim::Config::default();
         let i2c = Twim::new(p.TWISPI0, Irqs, p.P0_13, p.P0_14, i2c_cfg);
         let display = Some(DisplayParts { i2c });
