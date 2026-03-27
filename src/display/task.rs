@@ -1,5 +1,5 @@
 use embassy_executor::task;
-use embassy_futures::select::{select, Either};
+use embassy_futures::select::{select3, Either3};
 use embassy_time::Timer;
 use ssd1306::mode::DisplayConfigAsync;
 use ssd1306::prelude::DisplayRotation;
@@ -7,7 +7,7 @@ use ssd1306::size::DisplaySize128x64;
 use ssd1306::{I2CDisplayInterface, Ssd1306Async};
 
 use crate::board::DisplayParts;
-use crate::channel::{DisplayCommand, DisplayCommandChannel, StatusWatch};
+use crate::channel::{DisplayCommand, DisplayCommandChannel, RadioStatus, StatusWatch};
 
 use super::render::{self, RSSI_HISTORY_LEN};
 
@@ -21,27 +21,44 @@ const BOARD_NAME: &str = if cfg!(feature = "rak_wisblock_4631") {
     "unknown"
 };
 
+/// Duration per sparkline slot. 64 slots * 1s = ~1 minute of history.
+const SPARK_SLOT_MS: u64 = 1000;
+
+/// Sentinel: no packet received in this slot.
+const NO_SIGNAL: i16 = -121;
+
 struct DisplayState {
     rssi_history: [i16; RSSI_HISTORY_LEN],
     rssi_count: usize,
-    last_rx_count: u32,
+    current_slot_rssi: i16,
     display_on: bool,
+    last_status: RadioStatus,
 }
 
 impl DisplayState {
     fn new() -> Self {
         Self {
-            rssi_history: [0; RSSI_HISTORY_LEN],
+            rssi_history: [NO_SIGNAL; RSSI_HISTORY_LEN],
             rssi_count: 0,
-            last_rx_count: 0,
+            current_slot_rssi: NO_SIGNAL,
             display_on: true,
+            last_status: RadioStatus::default(),
         }
     }
 
-    fn push_rssi(&mut self, rssi: i16) {
+    /// Record an RSSI sample in the current time slot (keep best).
+    fn record_rssi(&mut self, rssi: i16) {
+        if self.current_slot_rssi == NO_SIGNAL || rssi > self.current_slot_rssi {
+            self.current_slot_rssi = rssi;
+        }
+    }
+
+    /// Advance to the next time slot, committing the current slot's RSSI.
+    fn advance_slot(&mut self) {
         let idx = self.rssi_count % RSSI_HISTORY_LEN;
-        self.rssi_history[idx] = rssi;
+        self.rssi_history[idx] = self.current_slot_rssi;
         self.rssi_count += 1;
+        self.current_slot_rssi = NO_SIGNAL;
     }
 }
 
@@ -66,43 +83,34 @@ pub async fn display_task(
     let _ = display.flush().await;
     Timer::after_millis(1500).await;
 
-    // Dashboard
     let mut state = DisplayState::new();
     let mut receiver = status.receiver().unwrap();
 
-    // Initial empty dashboard
-    render::dashboard(
-        &mut display,
-        &crate::channel::RadioStatus::default(),
-        &state.rssi_history,
-        state.rssi_count,
-    );
-    let _ = display.flush().await;
+    // Initial dashboard
+    render_and_flush(&mut display, &state).await;
 
     loop {
-        match select(receiver.changed(), display_commands.receive()).await {
-            Either::First(radio_status) => {
-                if !state.display_on {
-                    continue;
-                }
-
-                // Push new RSSI sample only when rx_count advances
-                if radio_status.rx_count != state.last_rx_count {
-                    state.last_rx_count = radio_status.rx_count;
-                    if let Some(rssi) = radio_status.last_rssi {
-                        state.push_rssi(rssi);
+        match select3(
+            receiver.changed(),
+            display_commands.receive(),
+            Timer::after_millis(SPARK_SLOT_MS),
+        )
+        .await
+        {
+            Either3::First(radio_status) => {
+                // Record RSSI from new packets
+                if let Some(rssi) = radio_status.last_rssi {
+                    if radio_status.rx_count != state.last_status.rx_count {
+                        state.record_rssi(rssi);
                     }
                 }
+                state.last_status = radio_status;
 
-                render::dashboard(
-                    &mut display,
-                    &radio_status,
-                    &state.rssi_history,
-                    state.rssi_count,
-                );
-                let _ = display.flush().await;
+                if state.display_on {
+                    render_and_flush(&mut display, &state).await;
+                }
             }
-            Either::Second(cmd) => match cmd {
+            Either3::Second(cmd) => match cmd {
                 DisplayCommand::Off => {
                     state.display_on = false;
                     render::blank(&mut display);
@@ -110,9 +118,37 @@ pub async fn display_task(
                 }
                 DisplayCommand::On => {
                     state.display_on = true;
-                    // Will re-render on next status update
+                    render_and_flush(&mut display, &state).await;
                 }
             },
+            Either3::Third(()) => {
+                // Timer tick: advance sparkline slot
+                state.advance_slot();
+                if state.display_on {
+                    render_and_flush(&mut display, &state).await;
+                }
+            }
         }
     }
+}
+
+// The concrete display type is verbose but avoids making this generic
+// over both DrawTarget and the SSD1306-specific flush method.
+type Display<I> = ssd1306::Ssd1306Async<
+    I,
+    DisplaySize128x64,
+    ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
+>;
+
+async fn render_and_flush<I>(display: &mut Display<I>, state: &DisplayState)
+where
+    I: display_interface::AsyncWriteOnlyDataCommand,
+{
+    render::dashboard(
+        display,
+        &state.last_status,
+        &state.rssi_history,
+        state.rssi_count,
+    );
+    let _ = display.flush().await;
 }

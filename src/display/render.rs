@@ -18,9 +18,9 @@ pub const RSSI_HISTORY_LEN: usize = 64;
 // Layout constants
 const W: i32 = 128;
 const FONT_H: i32 = 10;
-const SEP_Y: i32 = 40;
-const SPARK_TOP: i32 = 42;
-const SPARK_H: i32 = 22; // y=42..63
+const SEP_Y: i32 = 43;
+const SPARK_TOP: i32 = 45;
+const SPARK_H: i32 = 19; // y=45..63
 
 // RSSI mapping range (dBm)
 const RSSI_MIN: i16 = -120;
@@ -37,17 +37,14 @@ pub fn splash(
     let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
     let sub_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
 
-    // Title centered vertically and horizontally
     Text::with_alignment("DongLoRa", Point::new(W / 2, 24), title_style, Alignment::Center)
         .draw(target)
         .ok();
 
-    // Version
     Text::with_alignment(version, Point::new(W / 2, 42), sub_style, Alignment::Center)
         .draw(target)
         .ok();
 
-    // Board name
     Text::with_alignment(board_name, Point::new(W / 2, 54), sub_style, Alignment::Center)
         .draw(target)
         .ok();
@@ -65,21 +62,21 @@ pub fn dashboard(
 
     match status.config {
         Some(cfg) => {
-            // Row 0: state + frequency
-            let mut buf: String<21> = String::new();
+            // Row 0: state + frequency (full precision)
+            let mut buf: String<32> = String::new();
             let state_str = match status.state {
                 RadioState::Idle => "IDLE",
                 RadioState::Receiving => "RX",
                 RadioState::Transmitting => "TX",
             };
-            let freq_whole = cfg.freq_hz / 1_000_000;
-            let freq_frac = (cfg.freq_hz % 1_000_000) / 100_000;
-            let _ = write!(buf, "{:<4} {}.{}MHz", state_str, freq_whole, freq_frac);
+            let freq_mhz = cfg.freq_hz / 1_000_000;
+            let freq_khz = (cfg.freq_hz % 1_000_000) / 1_000;
+            let _ = write!(buf, "{:<4} {}.{:03}MHz", state_str, freq_mhz, freq_khz);
             Text::new(&buf, Point::new(0, FONT_H - 1), style)
                 .draw(target)
                 .ok();
 
-            // Row 0: state indicator — inverted box behind state text
+            // Inverted state indicator when active
             if status.state != RadioState::Idle {
                 let state_w = state_str.len() as i32 * 6;
                 let mut inv_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::Off);
@@ -93,21 +90,21 @@ pub fn dashboard(
                     .ok();
             }
 
-            // Row 1: BW SF CR
+            // Row 1: BW (full) SF CR
             buf.clear();
             let bw_str = match cfg.bw {
-                Bandwidth::Khz7 => "7k",
-                Bandwidth::Khz10 => "10k",
-                Bandwidth::Khz15 => "15k",
-                Bandwidth::Khz20 => "20k",
-                Bandwidth::Khz31 => "31k",
-                Bandwidth::Khz41 => "41k",
-                Bandwidth::Khz62 => "62k",
-                Bandwidth::Khz125 => "125k",
-                Bandwidth::Khz250 => "250k",
-                Bandwidth::Khz500 => "500k",
+                Bandwidth::Khz7 => "7.8kHz",
+                Bandwidth::Khz10 => "10.4kHz",
+                Bandwidth::Khz15 => "15.6kHz",
+                Bandwidth::Khz20 => "20.8kHz",
+                Bandwidth::Khz31 => "31.2kHz",
+                Bandwidth::Khz41 => "41.7kHz",
+                Bandwidth::Khz62 => "62.5kHz",
+                Bandwidth::Khz125 => "125kHz",
+                Bandwidth::Khz250 => "250kHz",
+                Bandwidth::Khz500 => "500kHz",
             };
-            let _ = write!(buf, "BW{} SF{} CR4/{}", bw_str, cfg.sf, cr_denom(cfg.cr));
+            let _ = write!(buf, "{} SF{} CR4/{}", bw_str, cfg.sf, cr_denom(cfg.cr));
             Text::new(&buf, Point::new(0, FONT_H * 2 - 1), style)
                 .draw(target)
                 .ok();
@@ -127,10 +124,10 @@ pub fn dashboard(
             buf.clear();
             match (status.last_rssi, status.last_snr) {
                 (Some(rssi), Some(snr)) => {
-                    let _ = write!(buf, "RSSI:{}  SNR:{}", rssi, snr);
+                    let _ = write!(buf, "RSSI:{} dBm  SNR:{} dB", rssi, snr);
                 }
                 (Some(rssi), None) => {
-                    let _ = write!(buf, "RSSI:{}", rssi);
+                    let _ = write!(buf, "RSSI:{} dBm", rssi);
                 }
                 _ => {
                     let _ = write!(buf, "No signal");
@@ -140,7 +137,7 @@ pub fn dashboard(
                 .draw(target)
                 .ok();
 
-            // Separator line
+            // Separator line (moved down to give RSSI/SNR breathing room)
             Line::new(Point::new(0, SEP_Y), Point::new(W - 1, SEP_Y))
                 .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
                 .draw(target)
@@ -161,6 +158,10 @@ pub fn dashboard(
 }
 
 /// Render the RSSI history as a bar-chart sparkline.
+///
+/// Each bar represents one time slot. The display task advances the
+/// slot index on a fixed timer, so each bar covers a constant duration
+/// regardless of packet rate. Bars with no packets in a slot show as empty.
 fn rssi_sparkline(
     target: &mut impl DrawTarget<Color = BinaryColor>,
     history: &[i16; RSSI_HISTORY_LEN],
@@ -174,32 +175,29 @@ fn rssi_sparkline(
     let fill = PrimitiveStyle::with_fill(BinaryColor::On);
 
     for i in 0..n {
-        // Read from oldest to newest for left-to-right display.
-        // history is stored with newest at index count-1 (modular).
-        // We want bar 0 = oldest visible, bar n-1 = newest.
         let idx = if count <= RSSI_HISTORY_LEN {
             i
         } else {
             (count - RSSI_HISTORY_LEN + i) % RSSI_HISTORY_LEN
         };
-        let rssi = history[idx].clamp(RSSI_MIN, RSSI_MAX);
+        let rssi = history[idx];
+        if rssi <= RSSI_MIN {
+            continue; // empty slot
+        }
+        let clamped = rssi.clamp(RSSI_MIN, RSSI_MAX);
 
-        // Map to bar height: 0 at RSSI_MIN, SPARK_H at RSSI_MAX
-        let bar_h = ((rssi - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32;
+        let bar_h = ((clamped - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32;
         if bar_h == 0 {
             continue;
         }
 
-        let x = (RSSI_HISTORY_LEN - n + i) as i32 * 2; // right-align bars
+        let x = (RSSI_HISTORY_LEN - n + i) as i32 * 2;
         let y = SPARK_TOP + SPARK_H - bar_h;
 
-        Rectangle::new(
-            Point::new(x, y),
-            Size::new(2, bar_h as u32),
-        )
-        .into_styled(fill)
-        .draw(target)
-        .ok();
+        Rectangle::new(Point::new(x, y), Size::new(2, bar_h as u32))
+            .into_styled(fill)
+            .draw(target)
+            .ok();
     }
 }
 

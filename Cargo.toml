@@ -20,6 +20,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 static_cell = "2.1"
 
 # Display rendering
+display-interface = "0.5"
 embedded-graphics = "0.8"
 ssd1306 = { version = "0.10", features = ["async"] }
 

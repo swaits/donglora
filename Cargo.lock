@@ -339,6 +339,7 @@ dependencies = [
  "cortex-m-rt",
  "critical-section",
  "defmt 0.3.100",
+ "display-interface",
  "embassy-embedded-hal",
  "embassy-executor",
  "embassy-futures",

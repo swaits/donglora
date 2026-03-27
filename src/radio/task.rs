@@ -113,6 +113,7 @@ async fn handle_cmd(
         Command::SetConfig(cfg) => {
             state.config = Some(cfg);
             status.sender().send(state.clone());
+            responses.send(Response::Ok).await;
         }
         Command::StartRx => {
             if state.config.is_some() {
@@ -120,6 +121,7 @@ async fn handle_cmd(
                     Ok(()) => {
                         state.state = RadioState::Receiving;
                         status.sender().send(state.clone());
+                        responses.send(Response::Ok).await;
                     }
                     Err(e) => {
                         warn!("StartRx failed: {}", e);
@@ -134,6 +136,7 @@ async fn handle_cmd(
             let _ = lora.enter_standby().await;
             state.state = RadioState::Idle;
             status.sender().send(state.clone());
+            responses.send(Response::Ok).await;
         }
         Command::DisplayOn | Command::DisplayOff => {}
         Command::Transmit { config, payload } => {
