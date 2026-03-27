@@ -21,8 +21,7 @@ type Iv = GenericSx126xInterfaceVariant<Output<'static>, Input<'static>>;
 type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
 pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 
-// TODO: USB CDC-ACM (UsbSerialJtag for dev, or full OTG stack for production)
-pub type UsbDriver = ();
+pub type UsbDriver = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
@@ -112,8 +111,10 @@ impl Board {
             delay: Delay,
         };
 
-        // ── USB (placeholder) ──────────────────────────────────────
-        let usb = UsbParts { driver: () };
+        // ── USB Serial (via USB-Serial-JTAG, shares PHY safely) ───
+        let usb_serial = esp_hal::usb_serial_jtag::UsbSerialJtag::new(p.USB_DEVICE)
+            .into_async();
+        let usb = UsbParts { driver: usb_serial };
 
         // ── Display (SSD1315 OLED on I2C, 0x3C) ───────────────────
         // Reset display controller

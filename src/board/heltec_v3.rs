@@ -21,8 +21,8 @@ type Iv = GenericSx126xInterfaceVariant<Output<'static>, Input<'static>>;
 type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
 pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 
-// TODO: V3 has CP2102 on UART0 — USB OTG on GPIO19/20 goes nowhere
-pub type UsbDriver = ();
+// V3 has CP2102 on UART0 but also has USB-Serial-JTAG on the ESP32-S3
+pub type UsbDriver = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
@@ -111,8 +111,10 @@ impl Board {
             delay: Delay,
         };
 
-        // ── USB (placeholder — V3 uses CP2102 on UART0) ───────────
-        let usb = UsbParts { driver: () };
+        // ── USB Serial (via USB-Serial-JTAG) ───────────────────────
+        let usb_serial = esp_hal::usb_serial_jtag::UsbSerialJtag::new(p.USB_DEVICE)
+            .into_async();
+        let usb = UsbParts { driver: usb_serial };
 
         // ── Display (SSD1306 OLED on I2C, 0x3C) ───────────────────
         let i2c = I2c::new(p.I2C0, I2cConfig::default())

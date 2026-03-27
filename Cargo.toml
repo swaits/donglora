@@ -23,7 +23,8 @@ static_cell = "2.1"
 embedded-graphics = "0.8"
 ssd1306 = { version = "0.10", features = ["async"] }
 
-# Async combinators (select)
+# Async IO traits and combinators
+embedded-io-async = "0.6"
 embassy-futures = "0.1"
 
 # ESP32-S3 (Heltec V3) — requires esp toolchain (espup)
