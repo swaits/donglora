@@ -17,6 +17,7 @@ cfg_if::cfg_if! {
         use panic_probe as _;
     } else if #[cfg(any(feature = "heltec_v3", feature = "heltec_v4"))] {
         use esp_backtrace as _;
+        use esp_println as _; // provides defmt global_logger
     }
 }
 

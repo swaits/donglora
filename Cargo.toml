@@ -47,12 +47,14 @@ heltec_v3 = [
     "dep:esp-hal",
     "dep:esp-hal-embassy",
     "dep:esp-println",
+    "embassy-executor/integrated-timers",
 ]
 heltec_v4 = [
     "dep:esp-backtrace",
     "dep:esp-hal",
     "dep:esp-hal-embassy",
     "dep:esp-println",
+    "embassy-executor/integrated-timers",
 ]
 rak_wisblock_4631 = [
     "dep:cortex-m-rt",
