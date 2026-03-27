@@ -1,10 +1,10 @@
 use embassy_executor::task;
 use embassy_futures::select::{select, Either};
 use embassy_time::Timer;
-use ssd1306::mode::DisplayConfig;
+use ssd1306::mode::DisplayConfigAsync;
 use ssd1306::prelude::DisplayRotation;
 use ssd1306::size::DisplaySize128x64;
-use ssd1306::{I2CDisplayInterface, Ssd1306};
+use ssd1306::{I2CDisplayInterface, Ssd1306Async};
 
 use crate::board::DisplayParts;
 use crate::channel::{DisplayCommand, DisplayCommandChannel, StatusWatch};
@@ -52,17 +52,18 @@ pub async fn display_task(
     display_commands: &'static DisplayCommandChannel,
 ) {
     let interface = I2CDisplayInterface::new(parts.i2c);
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
 
-    if display.init().is_err() {
+    if display.init().await.is_err() {
         defmt::error!("SSD1306 init failed");
         return;
     }
+    let _ = display.set_brightness(ssd1306::prelude::Brightness::BRIGHTEST).await;
 
     // Splash screen
     render::splash(&mut display, BOARD_NAME, env!("CARGO_PKG_VERSION"));
-    let _ = display.flush();
+    let _ = display.flush().await;
     Timer::after_millis(1500).await;
 
     // Dashboard
@@ -76,7 +77,7 @@ pub async fn display_task(
         &state.rssi_history,
         state.rssi_count,
     );
-    let _ = display.flush();
+    let _ = display.flush().await;
 
     loop {
         match select(receiver.changed(), display_commands.receive()).await {
@@ -99,13 +100,13 @@ pub async fn display_task(
                     &state.rssi_history,
                     state.rssi_count,
                 );
-                let _ = display.flush();
+                let _ = display.flush().await;
             }
             Either::Second(cmd) => match cmd {
                 DisplayCommand::Off => {
                     state.display_on = false;
                     render::blank(&mut display);
-                    let _ = display.flush();
+                    let _ = display.flush().await;
                 }
                 DisplayCommand::On => {
                     state.display_on = true;

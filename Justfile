@@ -47,7 +47,7 @@ clippy board:
     case "$target" in xtensa-*) \
         just _require_esp_toolchain; \
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
-        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
+        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly";; \
     esac; \
     eval $env cargo $extra clippy --target $target --features $feat -- -D warnings
 
@@ -81,7 +81,7 @@ _cargo board cmd:
     case "$target" in xtensa-*) \
         just _require_esp_toolchain; \
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
-        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
+        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly";; \
     esac; \
     eval $env cargo $extra {{cmd}} --target $target --features $feat
 

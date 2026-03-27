@@ -21,7 +21,8 @@ type Iv = GenericSx126xInterfaceVariant<Output<'static>, Input<'static>>;
 type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
 pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 
-pub type UsbDriver = esp_hal::otg_fs::asynch::Driver<'static>;
+// TODO: USB CDC-ACM (UsbSerialJtag for dev, or full OTG stack for production)
+pub type UsbDriver = ();
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
@@ -48,23 +49,21 @@ pub struct Board {
 
 impl Board {
     pub fn init() -> Self {
-        let mut p = esp_hal::init(esp_hal::Config::default());
-
-        // Init embassy time driver before consuming peripherals
-        let timg0 = TimerGroup::new(core::mem::replace(
-            &mut p.TIMG0,
-            unsafe { esp_hal::peripherals::TIMG0::steal() },
-        ));
-        esp_hal_embassy::init(timg0.timer0);
-
+        let p = esp_hal::init(esp_hal::Config::default());
         Self { p }
     }
 
     pub fn into_parts(self) -> (RadioParts, UsbParts, Option<DisplayParts>) {
         let p = self.p;
 
-        // ── Vext power: GPIO36, active HIGH to enable OLED ─────────
-        let _vext = Output::new(p.GPIO36, Level::High);
+        // ── Embassy time driver ────────────────────────────────────
+        let timg0 = TimerGroup::new(p.TIMG0);
+        esp_hal_embassy::init(timg0.timer0);
+
+        // ── Vext power: GPIO36 ─────────────────────────────────────
+        // V4 datasheet says "pull low to enable Vext"
+        let vext = Output::new(p.GPIO36, Level::Low);
+        core::mem::forget(vext);
 
         // ── DMA for SPI ────────────────────────────────────────────
         let dma = Dma::new(p.DMA);
@@ -113,24 +112,17 @@ impl Board {
             delay: Delay,
         };
 
-        // ── USB (native ESP32-S3 OTG) ─────────────────────────────
-        let usb_inst = esp_hal::otg_fs::Usb::new(p.USB0, p.GPIO20, p.GPIO19);
-        static EP_OUT_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
-        let ep_out_buf = EP_OUT_BUF.init([0u8; 1024]);
-        let usb = UsbParts {
-            driver: esp_hal::otg_fs::asynch::Driver::new(
-                usb_inst,
-                ep_out_buf,
-                esp_hal::otg_fs::asynch::Config::default(),
-            ),
-        };
+        // ── USB (placeholder) ──────────────────────────────────────
+        let usb = UsbParts { driver: () };
 
-        // ── Display (optional SSD1315 OLED on I2C, 0x3C) ──────────
-        // Reset display controller via GPIO21
+        // ── Display (SSD1315 OLED on I2C, 0x3C) ───────────────────
+        // Reset display controller
         let mut display_rst = Output::new(p.GPIO21, Level::Low);
+        esp_hal::delay::Delay::new().delay_millis(10);
         display_rst.set_high();
+        esp_hal::delay::Delay::new().delay_millis(10);
+        core::mem::forget(display_rst);
 
-        // Always provide I2C; display_task detects presence via SSD1306 init.
         let i2c = I2c::new(p.I2C0, I2cConfig::default())
             .with_sda(p.GPIO17)
             .with_scl(p.GPIO18)
