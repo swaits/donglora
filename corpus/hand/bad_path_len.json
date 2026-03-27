@@ -1,0 +1,15 @@
+{
+  "description": "TXT_MSG flood, path_len claims 33 hops (4B hash) but data is too short",
+  "tags": [
+    "invalid",
+    "bad_framing",
+    "path"
+  ],
+  "packet_hex": "09e1000000000000000000000000000000000000000000000000",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "TXT_MSG",
+    "error": "bad_framing"
+  }
+}

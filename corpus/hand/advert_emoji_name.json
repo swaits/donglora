@@ -1,0 +1,32 @@
+{
+  "description": "ADVERT flood, chat node with emoji in name (multi-byte UTF-8)",
+  "tags": [
+    "advert",
+    "flood",
+    "emoji",
+    "name",
+    "utf8"
+  ],
+  "packet_hex": "1100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f403fc6690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000081f09fa68520526170746f72",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": []
+    },
+    "payload": {
+      "pubkey_prefix": "00010203",
+      "timestamp": 1774600000,
+      "advert": {
+        "flags": 129,
+        "node_type": "chat",
+        "location": null,
+        "name": "🦅 Raptor"
+      }
+    }
+  }
+}

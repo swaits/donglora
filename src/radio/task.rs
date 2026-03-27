@@ -50,7 +50,7 @@ pub async fn radio_task(
                         Ok((len, pkt_status)) => {
                             state.rx_count = state.rx_count.wrapping_add(1);
                             let rssi = pkt_status.rssi;
-                            let snr = pkt_status.snr as i8;
+                            let snr = pkt_status.snr;
                             state.last_rssi = Some(rssi);
                             state.last_snr = Some(snr);
                             status.sender().send(state.clone());

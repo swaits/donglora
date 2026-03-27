@@ -1,0 +1,14 @@
+{
+  "description": "Random bytes, not a valid MeshCore packet",
+  "tags": [
+    "invalid",
+    "noise"
+  ],
+  "packet_hex": "03d135839fc28d00",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "REQ",
+    "error": "not_meshcore"
+  }
+}

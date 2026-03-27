@@ -1,0 +1,35 @@
+{
+  "description": "ADVERT flood, 4 hops with 1-byte hashes",
+  "tags": [
+    "advert",
+    "flood",
+    "path"
+  ],
+  "packet_hex": "11042a3d35ed000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f403fc669000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008152656c617965644e6f6465",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "2a",
+        "3d",
+        "35",
+        "ed"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "00010203",
+      "timestamp": 1774600000,
+      "advert": {
+        "flags": 129,
+        "node_type": "chat",
+        "location": null,
+        "name": "RelayedNode"
+      }
+    }
+  }
+}

@@ -26,54 +26,32 @@ const SPARK_H: i32 = 19; // y=45..63
 const RSSI_MIN: i16 = -120;
 const RSSI_MAX: i16 = 0;
 
-/// Render the boot splash screen.
-pub fn splash(target: &mut impl DrawTarget<Color = BinaryColor>, board_name: &str, version: &str) {
-    let _ = target.clear(BinaryColor::Off);
-
-    let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
-    let sub_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
-
-    Text::with_alignment(
-        "DongLoRa",
-        Point::new(W / 2, 24),
-        title_style,
-        Alignment::Center,
-    )
-    .draw(target)
-    .ok();
-
-    Text::with_alignment(version, Point::new(W / 2, 42), sub_style, Alignment::Center)
-        .draw(target)
-        .ok();
-
-    Text::with_alignment(
-        board_name,
-        Point::new(W / 2, 54),
-        sub_style,
-        Alignment::Center,
-    )
-    .draw(target)
-    .ok();
-}
-
 /// Render the main status dashboard.
 pub fn dashboard(
     target: &mut impl DrawTarget<Color = BinaryColor>,
     status: &RadioStatus,
     rssi_history: &[i16; RSSI_HISTORY_LEN],
+    tx_history: &[bool; RSSI_HISTORY_LEN],
     rssi_count: usize,
+    board_name: &str,
+    version: &str,
 ) {
     let _ = target.clear(BinaryColor::Off);
     let style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
 
     match status.config {
         Some(cfg) => {
-            // Row 0: state + frequency (full precision)
+            // Row 0: state + frequency, TX power right-justified
             let mut buf: String<32> = String::new();
             let freq_mhz = cfg.freq_hz / 1_000_000;
             let freq_khz = (cfg.freq_hz % 1_000_000) / 1_000;
             let _ = write!(buf, "     {}.{:03}MHz", freq_mhz, freq_khz);
             Text::new(&buf, Point::new(0, FONT_H - 1), style)
+                .draw(target)
+                .ok();
+            buf.clear();
+            let _ = write!(buf, "{}dBm", cfg.tx_power_dbm);
+            Text::with_alignment(&buf, Point::new(W - 1, FONT_H - 1), style, Alignment::Right)
                 .draw(target)
                 .ok();
 
@@ -133,13 +111,9 @@ pub fn dashboard(
                 .draw(target)
                 .ok();
 
-            // Row 2: TX power + counters
+            // Row 2: packet counters
             buf.clear();
-            let _ = write!(
-                buf,
-                "{}dBm RX:{} TX:{}",
-                cfg.tx_power_dbm, status.rx_count, status.tx_count
-            );
+            let _ = write!(buf, "RX:{} TX:{}", status.rx_count, status.tx_count);
             Text::new(&buf, Point::new(0, FONT_H * 3 - 1), style)
                 .draw(target)
                 .ok();
@@ -167,16 +141,33 @@ pub fn dashboard(
                 .draw(target)
                 .ok();
 
-            // RSSI sparkline
-            rssi_sparkline(target, rssi_history, rssi_count);
+            // RSSI sparkline (TX slots shown as dotted bars)
+            rssi_sparkline(target, rssi_history, tx_history, rssi_count);
         }
         None => {
-            Text::new("IDLE", Point::new(0, FONT_H - 1), style)
+            let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
+            Text::with_alignment(
+                "DongLoRa",
+                Point::new(W / 2, 24),
+                title_style,
+                Alignment::Center,
+            )
+            .draw(target)
+            .ok();
+            Text::with_alignment(version, Point::new(W / 2, 38), style, Alignment::Center)
                 .draw(target)
                 .ok();
-            Text::new("Waiting for host...", Point::new(0, FONT_H * 3 - 1), style)
+            Text::with_alignment(board_name, Point::new(W / 2, 50), style, Alignment::Center)
                 .draw(target)
                 .ok();
+            Text::with_alignment(
+                "Waiting for host...",
+                Point::new(W / 2, 63),
+                style,
+                Alignment::Center,
+            )
+            .draw(target)
+            .ok();
         }
     }
 }
@@ -185,10 +176,13 @@ pub fn dashboard(
 ///
 /// Each bar represents one time slot. The display task advances the
 /// slot index on a fixed timer, so each bar covers a constant duration
-/// regardless of packet rate. Bars with no packets in a slot show as empty.
+/// regardless of packet rate. RX slots draw solid bars; TX slots draw
+/// dotted bars (alternating pixel rows). TX takes precedence if both
+/// occurred in the same slot.
 fn rssi_sparkline(
     target: &mut impl DrawTarget<Color = BinaryColor>,
     history: &[i16; RSSI_HISTORY_LEN],
+    tx_history: &[bool; RSSI_HISTORY_LEN],
     count: usize,
 ) {
     if count == 0 {
@@ -204,13 +198,20 @@ fn rssi_sparkline(
         } else {
             (count - RSSI_HISTORY_LEN + i) % RSSI_HISTORY_LEN
         };
+        let is_tx = tx_history[idx];
         let rssi = history[idx];
-        if rssi <= RSSI_MIN {
-            continue; // empty slot
-        }
-        let clamped = rssi.clamp(RSSI_MIN, RSSI_MAX);
 
-        let bar_h = ((clamped - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32;
+        // TX slots with no RSSI: show a short fixed-height dotted bar
+        let bar_h = if rssi <= RSSI_MIN {
+            if is_tx {
+                SPARK_H / 3 // small marker for TX-only slots
+            } else {
+                continue; // empty slot
+            }
+        } else {
+            let clamped = rssi.clamp(RSSI_MIN, RSSI_MAX);
+            ((clamped - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32
+        };
         if bar_h == 0 {
             continue;
         }
@@ -218,10 +219,23 @@ fn rssi_sparkline(
         let x = (RSSI_HISTORY_LEN - n + i) as i32 * 2;
         let y = SPARK_TOP + SPARK_H - bar_h;
 
-        Rectangle::new(Point::new(x, y), Size::new(2, bar_h as u32))
-            .into_styled(fill)
-            .draw(target)
-            .ok();
+        if is_tx {
+            // Dotted bar: draw every other pixel row
+            for row in 0..bar_h {
+                if row % 2 == 0 {
+                    Rectangle::new(Point::new(x, y + row), Size::new(2, 1))
+                        .into_styled(fill)
+                        .draw(target)
+                        .ok();
+                }
+            }
+        } else {
+            // Solid bar for RX
+            Rectangle::new(Point::new(x, y), Size::new(2, bar_h as u32))
+                .into_styled(fill)
+                .draw(target)
+                .ok();
+        }
     }
 }
 

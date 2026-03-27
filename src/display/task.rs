@@ -29,8 +29,10 @@ const NO_SIGNAL: i16 = -121;
 
 struct DisplayState {
     rssi_history: [i16; RSSI_HISTORY_LEN],
+    tx_history: [bool; RSSI_HISTORY_LEN],
     rssi_count: usize,
     current_slot_rssi: i16,
+    current_slot_tx: bool,
     display_on: bool,
     disconnected: bool,
     last_status: RadioStatus,
@@ -40,8 +42,10 @@ impl DisplayState {
     fn new() -> Self {
         Self {
             rssi_history: [NO_SIGNAL; RSSI_HISTORY_LEN],
+            tx_history: [false; RSSI_HISTORY_LEN],
             rssi_count: 0,
             current_slot_rssi: NO_SIGNAL,
+            current_slot_tx: false,
             display_on: true,
             disconnected: true,
             last_status: RadioStatus::default(),
@@ -55,12 +59,19 @@ impl DisplayState {
         }
     }
 
-    /// Advance to the next time slot, committing the current slot's RSSI.
+    /// Mark the current time slot as having a transmit.
+    fn record_tx(&mut self) {
+        self.current_slot_tx = true;
+    }
+
+    /// Advance to the next time slot, committing the current slot's data.
     fn advance_slot(&mut self) {
         let idx = self.rssi_count % RSSI_HISTORY_LEN;
         self.rssi_history[idx] = self.current_slot_rssi;
+        self.tx_history[idx] = self.current_slot_tx;
         self.rssi_count += 1;
         self.current_slot_rssi = NO_SIGNAL;
+        self.current_slot_tx = false;
     }
 }
 
@@ -80,15 +91,10 @@ pub async fn display_task(
     }
     let _ = display.set_brightness(ssd1306::prelude::Brightness::BRIGHTEST).await;
 
-    // Splash screen
-    render::splash(&mut display, BOARD_NAME, env!("CARGO_PKG_VERSION"));
-    let _ = display.flush().await;
-    Timer::after_millis(1500).await;
-
     let mut state = DisplayState::new();
     let mut receiver = status.receiver().unwrap();
 
-    // Initial dashboard
+    // Show splash/waiting screen (dashboard with no config renders it)
     render_and_flush(&mut display, &state).await;
 
     loop {
@@ -107,6 +113,9 @@ pub async fn display_task(
                     if radio_status.rx_count != state.last_status.rx_count {
                         state.record_rssi(rssi);
                     }
+                }
+                if radio_status.tx_count != state.last_status.tx_count {
+                    state.record_tx();
                 }
                 state.last_status = radio_status;
 
@@ -133,8 +142,10 @@ pub async fn display_task(
                     state.disconnected = true;
                     state.last_status = RadioStatus::default();
                     state.rssi_history = [NO_SIGNAL; RSSI_HISTORY_LEN];
+                    state.tx_history = [false; RSSI_HISTORY_LEN];
                     state.rssi_count = 0;
                     state.current_slot_rssi = NO_SIGNAL;
+                    state.current_slot_tx = false;
                     render_and_flush(&mut display, &state).await;
                 }
             },
@@ -165,7 +176,10 @@ where
         display,
         &state.last_status,
         &state.rssi_history,
+        &state.tx_history,
         state.rssi_count,
+        BOARD_NAME,
+        env!("CARGO_PKG_VERSION"),
     );
     let _ = display.flush().await;
 }

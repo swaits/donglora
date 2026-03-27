@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MeshCore Packet Test Case",
+  "description": "A single test vector for MeshCore packet decoders",
+  "type": "object",
+  "required": ["description", "tags", "packet_hex", "valid", "expected"],
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "packet_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]*$",
+      "description": "Raw MeshCore packet as lowercase hex (no 0x prefix)"
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "Whether this packet should parse successfully"
+    },
+    "expected": {
+      "type": "object",
+      "required": ["route_type", "payload_type"],
+      "properties": {
+        "route_type": {
+          "type": "string",
+          "enum": ["flood", "direct", "tflood", "tdirect"]
+        },
+        "payload_type": {
+          "type": "string",
+          "enum": [
+            "REQ", "RESPONSE", "TXT_MSG", "ACK", "ADVERT",
+            "GRP_TXT", "GRP_DATA", "ANON_REQ", "PATH",
+            "TRACE", "MULTIPART", "CONTROL", "RAW_CUSTOM"
+          ]
+        },
+        "payload_ver": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "transport_codes": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["tc1", "tc2"],
+              "properties": {
+                "tc1": { "type": "integer" },
+                "tc2": { "type": "integer" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "path": {
+          "type": "object",
+          "required": ["hash_size", "hops"],
+          "properties": {
+            "hash_size": { "type": "integer", "minimum": 1, "maximum": 4 },
+            "hops": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^[0-9a-f]+$" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "error": {
+          "type": "string",
+          "enum": ["too_short", "not_meshcore", "bad_framing"],
+          "description": "Expected error category for invalid packets"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Payload-type-specific decoded fields",
+          "properties": {
+            "dst": { "type": "string", "pattern": "^[0-9a-f]{2}$" },
+            "src": { "type": "string", "pattern": "^[0-9a-f]{2}$" },
+            "mac": { "type": "string", "pattern": "^[0-9a-f]+$" },
+            "ciphertext_len": { "type": "integer", "minimum": 0 },
+            "channel_hash": { "type": "string", "pattern": "^[0-9a-f]{2}$" },
+            "ack_crc": { "type": "integer" },
+            "pubkey_prefix": { "type": "string", "pattern": "^[0-9a-f]+$" },
+            "timestamp": { "type": "integer" },
+            "advert": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "properties": {
+                    "flags": { "type": "integer", "minimum": 0, "maximum": 255 },
+                    "node_type": { "type": "string" },
+                    "location": {
+                      "oneOf": [
+                        { "type": "null" },
+                        {
+                          "type": "object",
+                          "required": ["lat", "lon"],
+                          "properties": {
+                            "lat": { "type": "number" },
+                            "lon": { "type": "number" }
+                          },
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "name": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "ephem_prefix": { "type": "string", "pattern": "^[0-9a-f]+$" },
+            "trace_tag": { "type": "integer" },
+            "trace_hops": { "type": "integer" },
+            "multipart_remaining": { "type": "integer" },
+            "multipart_inner": { "type": "string" },
+            "control_subtype": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

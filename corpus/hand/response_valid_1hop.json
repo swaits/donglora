@@ -1,0 +1,14 @@
+{
+  "description": "RESPONSE flood, 1 hop (real capture — same message as corrupted variants)",
+  "tags": ["response", "flood", "path", "real_capture"],
+  "packet_hex": "0501ac5bd17863f6ec7bbbd9bf8e5ea7d44b6a0e8f6318",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RESPONSE",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {"hash_size": 1, "hops": ["ac"]},
+    "payload": {"dst": "5b", "src": "d1", "mac": "7863", "ciphertext_len": 16}
+  }
+}

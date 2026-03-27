@@ -33,7 +33,7 @@ pub struct RadioStatus {
     pub rx_count: u32,
     pub tx_count: u32,
     pub last_rssi: Option<i16>,
-    pub last_snr: Option<i8>,
+    pub last_snr: Option<i16>,
 }
 
 /// Radio state machine states.

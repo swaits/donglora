@@ -1,0 +1,4 @@
+# file: /home/swaits/Code/lora-dongle/corpus/generate.py
+# hypothesis_version: 6.151.9
+
+[1000000.0, -180000000, -90000000, 127, 128, 184, 192, 255, 90000000, 180000000, 4294967295, '*.json', '--count', '<I', '<ii', 'ACK', 'ADVERT', 'ANON_REQ', 'CONTROL', 'GRP_DATA', 'GRP_TXT', 'L', 'MULTIPART', 'N', 'P', 'PATH', 'RAW_CUSTOM', 'REQ', 'RESPONSE', 'TRACE', 'TXT_MSG', 'Z', '__main__', 'ack_crc', 'advert', 'ascii', 'bad_framing', 'bad_path_len', 'channel_hash', 'chat', 'ciphertext_len', 'description', 'direct', 'dst', 'error', 'expected', 'flags', 'flood', 'generated', 'hash_size', 'hops', 'invalid', 'lat', 'location', 'lon', 'mac', 'name', 'node_type', 'not_meshcore', 'packet_hex', 'path', 'payload', 'payload_type', 'payload_ver', 'pubkey_prefix', 'random', 'repeater', 'replace', 'room', 'route_type', 'schema.json', 'sensor', 'src', 'tags', 'tdirect', 'tflood', 'timestamp', 'too_short', 'transport_codes', 'truncate', 'valid']

@@ -1,0 +1,11 @@
+{
+  "description": "RESPONSE flood, bit-corrupted path_len (0xc7 should be small), LoRa bit error",
+  "tags": ["invalid", "response", "flood", "corrupted", "real_capture", "bit_error"],
+  "packet_hex": "05c735935ed17863f6ec7bbbd9bf8e5ea7d44b6a0e8f6318",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RESPONSE",
+    "error": "bad_framing"
+  }
+}

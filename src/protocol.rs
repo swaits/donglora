@@ -68,7 +68,7 @@ pub enum Response {
     Config(RadioConfig),
     RxPacket {
         rssi: i16,
-        snr: i8,
+        snr: i16,
         payload: Vec<u8, MAX_PAYLOAD>,
     },
     TxDone,

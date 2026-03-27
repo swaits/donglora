@@ -1,0 +1,24 @@
+{
+  "description": "MULTIPART flood, remaining=3, inner type=ACK",
+  "tags": [
+    "multipart",
+    "flood",
+    "ack"
+  ],
+  "packet_hex": "290033bebafeca",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "MULTIPART",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": []
+    },
+    "payload": {
+      "multipart_remaining": 3,
+      "multipart_inner": "ACK"
+    }
+  }
+}

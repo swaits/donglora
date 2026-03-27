@@ -1,0 +1,30 @@
+{
+  "description": "ANON_REQ tdirect header but NO transport codes (older firmware)",
+  "tags": [
+    "anon_req",
+    "tdirect",
+    "tc_fallback"
+  ],
+  "packet_hex": "1f03133542d9202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3fb2e2000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+  "valid": true,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "ANON_REQ",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "13",
+        "35",
+        "42"
+      ]
+    },
+    "payload": {
+      "dst": "d9",
+      "ephem_prefix": "20212223",
+      "mac": "b2e2",
+      "ciphertext_len": 48
+    }
+  }
+}

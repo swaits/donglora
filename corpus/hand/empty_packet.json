@@ -1,0 +1,14 @@
+{
+  "description": "Empty packet (0 bytes)",
+  "tags": [
+    "invalid",
+    "too_short"
+  ],
+  "packet_hex": "",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "REQ",
+    "error": "too_short"
+  }
+}
