@@ -38,7 +38,7 @@ pub fn splash(
     let sub_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
 
     // Title centered vertically and horizontally
-    Text::with_alignment("LoRa Dongle", Point::new(W / 2, 24), title_style, Alignment::Center)
+    Text::with_alignment("DongLoRa", Point::new(W / 2, 24), title_style, Alignment::Center)
         .draw(target)
         .ok();
 

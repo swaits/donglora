@@ -1,4 +1,4 @@
-# lora-dongle
+# DongLoRa
 
 Transparent LoRa radio over USB. Plug in a board, talk LoRa from your host.
 

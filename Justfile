@@ -62,8 +62,8 @@ flash board:
     @just build {{board}} release
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     case "$target" in \
-        xtensa-*) espflash flash --monitor "{{firmware_dir}}/lora-dongle-{{board}}-release.elf" ;; \
-        *) probe-rs run --chip $chip "{{firmware_dir}}/lora-dongle-{{board}}-release.elf" ;; \
+        xtensa-*) espflash flash --monitor "{{firmware_dir}}/donglora-{{board}}-release.elf" ;; \
+        *) probe-rs run --chip $chip "{{firmware_dir}}/donglora-{{board}}-release.elf" ;; \
     esac
 
 # Show binary size for a release build
@@ -128,8 +128,8 @@ _require_esp_toolchain:
 _copy_firmware board profile:
     @mkdir -p {{firmware_dir}}
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    src="target/$target/{{profile}}/lora-dongle"; \
-    dst="{{firmware_dir}}/lora-dongle-{{board}}-{{profile}}"; \
+    src="target/$target/{{profile}}/donglora"; \
+    dst="{{firmware_dir}}/donglora-{{board}}-{{profile}}"; \
     if [ -f "$src" ]; then cp "$src" "$dst.elf"; echo "→ $dst.elf"; fi
 
 [private]
