@@ -42,14 +42,7 @@ check board:
 
 # Run clippy on a single board
 clippy board:
-    @read -r feat target chip <<< "$(just _info {{board}})"; \
-    env=""; extra=""; \
-    case "$target" in xtensa-*) \
-        just _require_esp_toolchain; \
-        [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
-        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly";; \
-    esac; \
-    eval $env cargo $extra clippy --target $target --features $feat -- -D warnings
+    @just _cargo {{board}} "clippy -- -D warnings"
 
 # Build release firmware and copy to firmware/ with a readable name
 build board profile="release":

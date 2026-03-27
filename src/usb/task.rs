@@ -1,6 +1,5 @@
 use embassy_executor::task;
 use embassy_futures::join::join;
-use embassy_futures::select::{select, Either};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, Receiver, Sender, State};
 use embassy_usb::Builder;
 use postcard::accumulator::{CobsAccumulator, FeedResult};
@@ -74,28 +73,29 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
     display_commands: &'static DisplayCommandChannel,
     has_display: bool,
 ) {
-    let mut cobs_buf: CobsAccumulator<MAX_FRAME> = CobsAccumulator::new();
+    use embassy_futures::select::select3;
+    use embassy_futures::select::Either3;
+
     let mut read_buf = [0u8; MAX_PACKET];
     let mut write_buf = [0u8; MAX_FRAME];
-
-    // Wait for host to open the port (DTR signal)
-    receiver.wait_connection().await;
-    if has_display {
-        // Could send a "connected" signal here in the future
-    }
+    let mut cobs_buf: CobsAccumulator<MAX_FRAME> = CobsAccumulator::new();
+    let mut was_connected = false;
 
     loop {
-        match select(receiver.read_packet(&mut read_buf), responses.receive()).await {
-            Either::First(result) => {
+        match select3(
+            receiver.read_packet(&mut read_buf),
+            responses.receive(),
+            embassy_time::Timer::after_millis(250),
+        )
+        .await
+        {
+            Either3::First(result) => {
                 let n = match result {
+                    Ok(0) => continue,
                     Ok(n) => n,
                     Err(_) => {
-                        // USB disconnect — reset and wait for reconnection
                         cobs_buf = CobsAccumulator::new();
-                        if has_display {
-                            let _ = display_commands.try_send(DisplayCommand::Reset);
-                        }
-                        receiver.wait_connection().await;
+                        embassy_time::Timer::after_millis(100).await;
                         continue;
                     }
                 };
@@ -116,15 +116,27 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                     };
                 }
             }
-            Either::Second(response) => {
+            Either3::Second(response) => {
                 if let Ok(buf) = postcard::to_slice_cobs(&response, &mut write_buf) {
-                    // CDC-ACM has a max packet size — send in chunks
                     for chunk in buf.chunks(MAX_PACKET) {
                         let _ = sender.write_packet(chunk).await;
                     }
                 }
             }
+            Either3::Third(()) => {
+                // Poll DTR every 250ms to detect host disconnect
+            }
         }
+
+        // Check DTR after every select wake
+        let connected = receiver.dtr();
+        if was_connected && !connected && has_display {
+            display_commands.send(DisplayCommand::Reset).await;
+        }
+        if !was_connected && connected && has_display {
+            display_commands.send(DisplayCommand::On).await;
+        }
+        was_connected = connected;
     }
 }
 

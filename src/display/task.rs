@@ -32,6 +32,7 @@ struct DisplayState {
     rssi_count: usize,
     current_slot_rssi: i16,
     display_on: bool,
+    disconnected: bool,
     last_status: RadioStatus,
 }
 
@@ -42,6 +43,7 @@ impl DisplayState {
             rssi_count: 0,
             current_slot_rssi: NO_SIGNAL,
             display_on: true,
+            disconnected: true,
             last_status: RadioStatus::default(),
         }
     }
@@ -98,7 +100,9 @@ pub async fn display_task(
         .await
         {
             Either3::First(radio_status) => {
-                // Record RSSI from new packets
+                if state.disconnected {
+                    continue;
+                }
                 if let Some(rssi) = radio_status.last_rssi {
                     if radio_status.rx_count != state.last_status.rx_count {
                         state.record_rssi(rssi);
@@ -112,15 +116,21 @@ pub async fn display_task(
             }
             Either3::Second(cmd) => match cmd {
                 DisplayCommand::Off => {
+                    state.disconnected = false;
                     state.display_on = false;
                     render::blank(&mut display);
                     let _ = display.flush().await;
                 }
                 DisplayCommand::On => {
+                    state.disconnected = false;
                     state.display_on = true;
+                    if let Some(s) = receiver.try_get() {
+                        state.last_status = s;
+                    }
                     render_and_flush(&mut display, &state).await;
                 }
                 DisplayCommand::Reset => {
+                    state.disconnected = true;
                     state.last_status = RadioStatus::default();
                     state.rssi_history = [NO_SIGNAL; RSSI_HISTORY_LEN];
                     state.rssi_count = 0;
