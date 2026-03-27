@@ -27,27 +27,33 @@ const RSSI_MIN: i16 = -120;
 const RSSI_MAX: i16 = 0;
 
 /// Render the boot splash screen.
-pub fn splash(
-    target: &mut impl DrawTarget<Color = BinaryColor>,
-    board_name: &str,
-    version: &str,
-) {
+pub fn splash(target: &mut impl DrawTarget<Color = BinaryColor>, board_name: &str, version: &str) {
     let _ = target.clear(BinaryColor::Off);
 
     let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
     let sub_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
 
-    Text::with_alignment("DongLoRa", Point::new(W / 2, 24), title_style, Alignment::Center)
-        .draw(target)
-        .ok();
+    Text::with_alignment(
+        "DongLoRa",
+        Point::new(W / 2, 24),
+        title_style,
+        Alignment::Center,
+    )
+    .draw(target)
+    .ok();
 
     Text::with_alignment(version, Point::new(W / 2, 42), sub_style, Alignment::Center)
         .draw(target)
         .ok();
 
-    Text::with_alignment(board_name, Point::new(W / 2, 54), sub_style, Alignment::Center)
-        .draw(target)
-        .ok();
+    Text::with_alignment(
+        board_name,
+        Point::new(W / 2, 54),
+        sub_style,
+        Alignment::Center,
+    )
+    .draw(target)
+    .ok();
 }
 
 /// Render the main status dashboard.
@@ -64,30 +70,48 @@ pub fn dashboard(
         Some(cfg) => {
             // Row 0: state + frequency (full precision)
             let mut buf: String<32> = String::new();
-            let state_str = match status.state {
-                RadioState::Idle => "IDLE",
-                RadioState::Receiving => "RX",
-                RadioState::Transmitting => "TX",
-            };
             let freq_mhz = cfg.freq_hz / 1_000_000;
             let freq_khz = (cfg.freq_hz % 1_000_000) / 1_000;
-            let _ = write!(buf, "{:<4} {}.{:03}MHz", state_str, freq_mhz, freq_khz);
+            let _ = write!(buf, "     {}.{:03}MHz", freq_mhz, freq_khz);
             Text::new(&buf, Point::new(0, FONT_H - 1), style)
                 .draw(target)
                 .ok();
 
-            // Inverted state indicator when active
-            if status.state != RadioState::Idle {
-                let state_w = state_str.len() as i32 * 6;
-                let mut inv_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::Off);
-                inv_style.set_background_color(Some(BinaryColor::On));
-                Rectangle::new(Point::new(0, 0), Size::new(state_w as u32, FONT_H as u32))
-                    .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
-                    .draw(target)
-                    .ok();
-                Text::new(state_str, Point::new(0, FONT_H - 1), inv_style)
-                    .draw(target)
-                    .ok();
+            // State indicator: inverted "RX" or "TX", plain "IDLE"
+            match status.state {
+                RadioState::Idle => {
+                    Text::new("IDLE", Point::new(0, FONT_H - 1), style)
+                        .draw(target)
+                        .ok();
+                }
+                RadioState::Receiving => {
+                    let x = 0;
+                    let char_w = 6;
+                    let text_w = 2 * char_w; // "RX" = 2 chars
+                    let mut inv_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::Off);
+                    inv_style.set_background_color(Some(BinaryColor::On));
+                    Rectangle::new(Point::new(x, 0), Size::new(text_w as u32, FONT_H as u32))
+                        .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
+                        .draw(target)
+                        .ok();
+                    Text::new("RX", Point::new(x, FONT_H - 1), inv_style)
+                        .draw(target)
+                        .ok();
+                }
+                RadioState::Transmitting => {
+                    let char_w = 6;
+                    let x = 2 * char_w; // start at column 2 (third character position)
+                    let text_w = 2 * char_w; // "TX" = 2 chars
+                    let mut inv_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::Off);
+                    inv_style.set_background_color(Some(BinaryColor::On));
+                    Rectangle::new(Point::new(x, 0), Size::new(text_w as u32, FONT_H as u32))
+                        .into_styled(PrimitiveStyle::with_fill(BinaryColor::On))
+                        .draw(target)
+                        .ok();
+                    Text::new("TX", Point::new(x, FONT_H - 1), inv_style)
+                        .draw(target)
+                        .ok();
+                }
             }
 
             // Row 1: BW (full) SF CR
