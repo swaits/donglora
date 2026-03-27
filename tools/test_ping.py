@@ -12,7 +12,9 @@ import sys
 import time
 from cobs import cobs
 
-# Espressif USB JTAG/serial debug unit
+# TODO: switch to custom VID:PID 1209:5741 (open-source VID, "WA" PID)
+# once USB OTG CDC-ACM is implemented. For now, ESP32-S3's built-in
+# USB-Serial-JTAG always presents as the Espressif VID:PID.
 USB_VID_PID = "303a:1001"
 
 
