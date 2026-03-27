@@ -120,14 +120,14 @@ pub fn dashboard(
                 .draw(target)
                 .ok();
 
-            // Row 3: RSSI + SNR
+            // Row 3: RSSI + SNR (compact to fit 21 chars)
             buf.clear();
             match (status.last_rssi, status.last_snr) {
                 (Some(rssi), Some(snr)) => {
-                    let _ = write!(buf, "RSSI:{} dBm  SNR:{} dB", rssi, snr);
+                    let _ = write!(buf, "{}dBm  SNR:{}dB", rssi, snr);
                 }
                 (Some(rssi), None) => {
-                    let _ = write!(buf, "RSSI:{} dBm", rssi);
+                    let _ = write!(buf, "{}dBm", rssi);
                 }
                 _ => {
                     let _ = write!(buf, "No signal");
