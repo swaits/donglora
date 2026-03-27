@@ -21,7 +21,7 @@ type Iv = GenericSx126xInterfaceVariant<Output<'static>, Input<'static>>;
 type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
 pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 
-pub type UsbDriver = esp_hal::usb_serial_jtag::UsbSerialJtag<'static, esp_hal::Async>;
+pub type UsbDriver = esp_hal::otg_fs::asynch::Driver<'static>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
@@ -112,9 +112,19 @@ impl Board {
         };
 
         // ── USB Serial (via USB-Serial-JTAG, shares PHY safely) ───
-        let usb_serial = esp_hal::usb_serial_jtag::UsbSerialJtag::new(p.USB_DEVICE)
-            .into_async();
-        let usb = UsbParts { driver: usb_serial };
+        // ── USB OTG CDC-ACM driver ──────────────────────────────
+        // Note: this switches the internal USB PHY from Serial-JTAG to OTG.
+        // espflash --monitor will stop working after this point.
+        let usb_inst = esp_hal::otg_fs::Usb::new(p.USB0, p.GPIO20, p.GPIO19);
+        static EP_OUT_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
+        let ep_out_buf = EP_OUT_BUF.init([0u8; 1024]);
+        let usb = UsbParts {
+            driver: esp_hal::otg_fs::asynch::Driver::new(
+                usb_inst,
+                ep_out_buf,
+                esp_hal::otg_fs::asynch::Config::default(),
+            ),
+        };
 
         // ── Display (SSD1315 OLED on I2C, 0x3C) ───────────────────
         // Reset display controller

@@ -10,6 +10,7 @@ use crate::protocol::{Command, RadioConfig, Response};
 pub enum DisplayCommand {
     On,
     Off,
+    Reset,
 }
 
 /// USB-to-display command channel.

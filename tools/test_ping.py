@@ -12,10 +12,8 @@ import sys
 import time
 from cobs import cobs
 
-# TODO: switch to custom VID:PID 1209:5741 (open-source VID, "WA" PID)
-# once USB OTG CDC-ACM is implemented. For now, ESP32-S3's built-in
-# USB-Serial-JTAG always presents as the Espressif VID:PID.
-USB_VID_PID = "303a:1001"
+# Open-source VID 1209, PID "WA" (0x5741)
+USB_VID_PID = "1209:5741"
 
 
 def find_serial_port() -> str | None:

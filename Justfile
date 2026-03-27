@@ -62,7 +62,7 @@ flash board:
     @just build {{board}} release
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     case "$target" in \
-        xtensa-*) espflash flash --monitor "{{firmware_dir}}/donglora-{{board}}-release.elf" ;; \
+        xtensa-*) espflash flash "{{firmware_dir}}/donglora-{{board}}-release.elf" ;; \
         *) probe-rs run --chip $chip "{{firmware_dir}}/donglora-{{board}}-release.elf" ;; \
     esac
 

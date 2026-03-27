@@ -120,6 +120,13 @@ pub async fn display_task(
                     state.display_on = true;
                     render_and_flush(&mut display, &state).await;
                 }
+                DisplayCommand::Reset => {
+                    state.last_status = RadioStatus::default();
+                    state.rssi_history = [NO_SIGNAL; RSSI_HISTORY_LEN];
+                    state.rssi_count = 0;
+                    state.current_slot_rssi = NO_SIGNAL;
+                    render_and_flush(&mut display, &state).await;
+                }
             },
             Either3::Third(()) => {
                 // Timer tick: advance sparkline slot

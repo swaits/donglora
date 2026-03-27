@@ -347,6 +347,7 @@ dependencies = [
  "embassy-sync 0.6.2",
  "embassy-time",
  "embassy-usb",
+ "embassy-usb-driver",
  "embedded-graphics",
  "embedded-io-async",
  "esp-backtrace",
