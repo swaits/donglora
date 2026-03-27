@@ -45,6 +45,7 @@ clippy board:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     env=""; extra=""; \
     case "$target" in xtensa-*) \
+        just _require_esp_toolchain; \
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
         env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
     esac; \
@@ -55,11 +56,15 @@ build board profile="release":
     @just _cargo {{board}} "build --{{profile}}"
     @just _copy_firmware {{board}} {{profile}}
 
-# Build and flash a board via probe-rs
+# Build and flash a board (espflash for Xtensa, probe-rs for ARM)
 flash board:
+    @just _require_flash_tool {{board}}
     @just build {{board}} release
     @read -r feat target chip <<< "$(just _info {{board}})"; \
-    probe-rs run --chip $chip "{{firmware_dir}}/lora-dongle-{{board}}-release.elf"
+    case "$target" in \
+        xtensa-*) espflash flash --monitor "{{firmware_dir}}/lora-dongle-{{board}}-release.elf" ;; \
+        *) probe-rs run --chip $chip "{{firmware_dir}}/lora-dongle-{{board}}-release.elf" ;; \
+    esac
 
 # Show binary size for a release build
 size board:
@@ -74,12 +79,13 @@ _cargo board cmd:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     env=""; extra=""; \
     case "$target" in xtensa-*) \
+        just _require_esp_toolchain; \
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
         env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly -Zbuild-std=core";; \
     esac; \
     eval $env cargo $extra {{cmd}} --target $target --features $feat
 
-# Check if a board's toolchain is available
+# Check if a board's toolchain is available (silent, for build-all/check-all skipping)
 [private]
 _can_build board:
     @read -r feat target chip <<< "$(just _info {{board}})"; \
@@ -87,6 +93,36 @@ _can_build board:
         xtensa-*) rustup toolchain list | grep -q "^esp" ;; \
         *) rustup target list --installed | grep -q "^$target$" || rustup target add "$target" >/dev/null 2>&1 ;; \
     esac
+
+# Verify the flash tool is installed for a board, with install instructions if not
+[private]
+_require_flash_tool board:
+    @read -r feat target chip <<< "$(just _info {{board}})"; \
+    case "$target" in \
+        xtensa-*) \
+            if ! command -v espflash >/dev/null 2>&1; then \
+                echo "error: espflash is required to flash ESP32 boards" >&2; \
+                echo "  install: cargo install espflash" >&2; \
+                exit 1; \
+            fi ;; \
+        *) \
+            if ! command -v probe-rs >/dev/null 2>&1; then \
+                echo "error: probe-rs is required to flash ARM boards" >&2; \
+                echo "  install: cargo install probe-rs-tools" >&2; \
+                exit 1; \
+            fi ;; \
+    esac
+
+# Verify the esp toolchain is installed, with install instructions if not
+[private]
+_require_esp_toolchain:
+    @if ! rustup toolchain list | grep -q "^esp"; then \
+        echo "error: ESP toolchain not found" >&2; \
+        echo "  install:" >&2; \
+        echo "    cargo install espup" >&2; \
+        echo "    espup install --toolchain-version 1.82.0.3" >&2; \
+        exit 1; \
+    fi
 
 [private]
 _copy_firmware board profile:
