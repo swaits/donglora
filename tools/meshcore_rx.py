@@ -703,8 +703,6 @@ def _try_decode_body(data: bytes, pos: int, type_name: str, type_color: str,
 
     payload = data[pos:]
     prefix = f"{type_color}{type_name}{RST} {route_name}{tc_str}{hops_str}"
-    if payload_ver != 0:
-        prefix += f" {DIM}v{payload_ver}{RST}"
 
     if payload_type == 0x04:
         result = _decode_advert(prefix, payload)
@@ -740,6 +738,15 @@ def decode_meshcore_packet(data: bytes) -> str:
     route_type = header & 0x03
     payload_type = (header >> 2) & 0x0F
     payload_ver = (header >> 6) & 0x03
+
+    # MeshCore only implements PAYLOAD_VER_1 (0x00) — versions 1-3 are reserved
+    # and rejected by real nodes. Packets with ver > 0 are noise or non-MeshCore.
+    if payload_ver != 0:
+        route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
+        type_name = PAYLOAD_NAMES.get(payload_type, f"0x{payload_type:02x}")
+        return (f"{RED}<not meshcore>{RST} {DIM}hdr=0x{header:02x} "
+                f"(ver={payload_ver} — only v0 exists) {data[1:].hex()}{RST}")
+
     route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
     type_name = PAYLOAD_NAMES.get(payload_type, f"0x{payload_type:02x}")
     type_color = TYPE_COLORS.get(type_name, WHT)
@@ -766,9 +773,8 @@ def decode_meshcore_packet(data: bytes) -> str:
             return result
 
     # Both attempts failed — show what we know from the header
-    ver_str = f" {DIM}v{payload_ver}{RST}" if payload_ver else ""
     return (f"{RED}<bad framing>{RST} {type_color}{type_name}{RST} "
-            f"{route_name}{ver_str} {DIM}{data[1:].hex()}{RST}")
+            f"{route_name} {DIM}{data[1:].hex()}{RST}")
 
 
 def _decode_advert(prefix: str, payload: bytes) -> str:
