@@ -1,5 +1,6 @@
 /target
 /vendor
+/firmware
 src/board/mod.rs
 __pycache__/
 .hypothesis/

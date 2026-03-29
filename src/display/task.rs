@@ -89,10 +89,19 @@ pub async fn display_task(
         defmt::error!("SSD1306 init failed");
         return;
     }
-    let _ = display.set_brightness(ssd1306::prelude::Brightness::BRIGHTEST).await;
+    if display
+        .set_brightness(ssd1306::prelude::Brightness::BRIGHTEST)
+        .await
+        .is_err()
+    {
+        defmt::warn!("display brightness set failed");
+    }
 
     let mut state = DisplayState::new();
-    let mut receiver = status.receiver().unwrap();
+    let Some(mut receiver) = status.receiver() else {
+        defmt::error!("no watch receiver available for display");
+        return;
+    };
 
     // Show splash/waiting screen (dashboard with no config renders it)
     render_and_flush(&mut display, &state).await;
@@ -139,13 +148,7 @@ pub async fn display_task(
                     render_and_flush(&mut display, &state).await;
                 }
                 DisplayCommand::Reset => {
-                    state.disconnected = true;
-                    state.last_status = RadioStatus::default();
-                    state.rssi_history = [NO_SIGNAL; RSSI_HISTORY_LEN];
-                    state.tx_history = [false; RSSI_HISTORY_LEN];
-                    state.rssi_count = 0;
-                    state.current_slot_rssi = NO_SIGNAL;
-                    state.current_slot_tx = false;
+                    state = DisplayState::new();
                     render_and_flush(&mut display, &state).await;
                 }
             },

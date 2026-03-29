@@ -3,6 +3,13 @@ name = "donglora"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
+authors = ["Stephen Waits <steve@waits.net>"]
+license = "MIT"
+description = "Transparent LoRa radio over USB — plug in a board, talk LoRa from your host"
+repository = "https://github.com/swaits/donglora"
+readme = "README.md"
+keywords = ["lora", "radio", "embedded", "usb", "firmware"]
+categories = ["embedded", "hardware-support", "no-std"]
 
 [dependencies]
 cfg-if = "1.0"
