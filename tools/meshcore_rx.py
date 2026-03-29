@@ -914,7 +914,7 @@ RADIO_CONFIG = {
     "freq_hz": 910_525_000,
     "bw": 6,  # Khz62 = variant index 6
     "sf": 7,
-    "cr": 0,  # Cr4_5 = variant index 0
+    "cr": 5,  # CR 4/5 — denominator value
     "sync_word": 0x3444,
     "tx_power_dbm": 14,
 }

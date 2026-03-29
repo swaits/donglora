@@ -206,13 +206,17 @@ fn to_sf(sf: u8) -> lora_phy::mod_params::SpreadingFactor {
     }
 }
 
-fn to_cr(cr: protocol::CodingRate) -> lora_phy::mod_params::CodingRate {
+fn to_cr(cr: u8) -> lora_phy::mod_params::CodingRate {
     use lora_phy::mod_params::CodingRate::*;
     match cr {
-        protocol::CodingRate::Cr4_5 => _4_5,
-        protocol::CodingRate::Cr4_6 => _4_6,
-        protocol::CodingRate::Cr4_7 => _4_7,
-        protocol::CodingRate::Cr4_8 => _4_8,
+        5 => _4_5,
+        6 => _4_6,
+        7 => _4_7,
+        8 => _4_8,
+        _ => {
+            debug_assert!(false, "BUG: unvalidated CR {}", cr);
+            _4_5
+        }
     }
 }
 

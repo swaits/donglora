@@ -20,23 +20,15 @@ pub enum Bandwidth {
     Khz500 = 9,
 }
 
-/// LoRa forward error correction coding rate.
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
-#[repr(u8)]
-pub enum CodingRate {
-    Cr4_5 = 1,
-    Cr4_6 = 2,
-    Cr4_7 = 3,
-    Cr4_8 = 4,
-}
-
 /// Complete LoRa radio configuration.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 pub struct RadioConfig {
     pub freq_hz: u32,
     pub bw: Bandwidth,
+    /// Spreading factor (5-12).
     pub sf: u8,
-    pub cr: CodingRate,
+    /// Coding rate denominator (5-8). E.g. 5 = CR 4/5, 8 = CR 4/8.
+    pub cr: u8,
     pub sync_word: u16,
     pub tx_power_dbm: i8,
 }
@@ -77,13 +69,15 @@ pub enum Response {
 }
 
 /// Error codes reported to the host.
+///
+/// Variant indices match postcard wire encoding (0-based).
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 #[repr(u8)]
 pub enum ErrorCode {
-    InvalidConfig = 1,
-    RadioBusy = 2,
-    TxTimeout = 3,
-    CrcError = 4,
-    NotConfigured = 5,
-    NoDisplay = 6,
+    InvalidConfig = 0,
+    RadioBusy = 1,
+    TxTimeout = 2,
+    CrcError = 3,
+    NotConfigured = 4,
+    NoDisplay = 5,
 }

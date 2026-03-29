@@ -106,7 +106,7 @@ pub fn dashboard(
                 Bandwidth::Khz250 => "250kHz",
                 Bandwidth::Khz500 => "500kHz",
             };
-            let _ = write!(buf, "{} SF{} CR4/{}", bw_str, cfg.sf, cr_denom(cfg.cr));
+            let _ = write!(buf, "{} SF{} CR4/{}", bw_str, cfg.sf, cfg.cr);
             Text::new(&buf, Point::new(0, FONT_H * 2 - 1), style)
                 .draw(target)
                 .ok();
@@ -244,12 +244,3 @@ pub fn blank(target: &mut impl DrawTarget<Color = BinaryColor>) {
     let _ = target.clear(BinaryColor::Off);
 }
 
-fn cr_denom(cr: crate::protocol::CodingRate) -> u8 {
-    use crate::protocol::CodingRate;
-    match cr {
-        CodingRate::Cr4_5 => 5,
-        CodingRate::Cr4_6 => 6,
-        CodingRate::Cr4_7 => 7,
-        CodingRate::Cr4_8 => 8,
-    }
-}
