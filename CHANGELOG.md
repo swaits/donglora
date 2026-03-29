@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - RSSI sparkline (1-minute history, TX shown as dotted bars)
   - Combined splash/waiting screen on disconnect
 - Auto-detect USB host connect/disconnect via DTR
-- Config validation against SX1262 hardware limits
+- Config validation against per-board hardware limits
+- `TX_POWER_MAX` sentinel (`-128`): auto-use the board's maximum TX power
 - Board support: Heltec V3, Heltec V4, RAK WisBlock 4631
 - Example: MeshCore packet decoder with group channel decryption
 

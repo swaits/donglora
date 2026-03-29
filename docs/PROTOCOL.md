@@ -64,10 +64,10 @@ Postcard is a compact binary format. The subset used by DongLoRa:
 |-------|------|---------------|-------------|-------------|
 | `freq_hz` | `u32` | varint | 150,000,000 – 960,000,000 | Frequency in Hz |
 | `bw` | `Bandwidth` | varint (0–9) | see table | Signal bandwidth |
-| `sf` | `u8` | varint | 5 – 12 | Spreading factor |
-| `cr` | `u8` | varint | 5 – 8 | Coding rate denominator (5 = CR 4/5) |
+| `sf` | `u8` | raw byte | 5 – 12 | Spreading factor |
+| `cr` | `u8` | raw byte | 5 – 8 | Coding rate denominator (5 = CR 4/5) |
 | `sync_word` | `u16` | varint | any | LoRa sync word (e.g. `0x3444`) |
-| `tx_power_dbm` | `i8` | raw signed byte | board-dependent | TX power in dBm. `-128` = max power for this board. |
+| `tx_power_dbm` | `i8` | raw signed byte | board-dependent | TX power in dBm. `-128` = board's max power. |
 
 ## Bandwidth
 
@@ -102,21 +102,23 @@ Configure the radio for 915 MHz, 125 kHz BW, SF7, CR 4/5, sync word `0x3444`,
 
 ### 1. Build the RadioConfig
 
-| Field | Value | Varint bytes |
-|-------|-------|-------------|
-| `freq_hz` | 915,000,000 | `80 84 AF B4 03` |
-| `bw` | 7 (125 kHz) | `07` |
-| `sf` | 7 | `07` |
-| `cr` | 5 (CR 4/5) | `05` |
-| `sync_word` | 0x3444 | `C4 E8 00` |
-| `tx_power_dbm` | 14 → zigzag 28 | `1C` |
+| Field | Value | Wire bytes | Encoding |
+|-------|-------|-----------|----------|
+| `freq_hz` | 915,000,000 | `C0 95 A7 B4 03` | varint |
+| `bw` | 7 (125 kHz) | `07` | varint (enum index) |
+| `sf` | 7 | `07` | raw byte |
+| `cr` | 5 (CR 4/5) | `05` | raw byte |
+| `sync_word` | 0x3444 | `C4 68` | varint |
+| `tx_power_dbm` | 14 | `0E` | raw signed byte |
+
+Or use `-128` (`0x80`) for `tx_power_dbm` to request the board's max power.
 
 ### 2. Build the SetConfig command
 
 Prepend the variant index for `SetConfig` (index 2):
 
 ```
-02 80 84 AF B4 03 07 07 05 C4 E8 00 1C
+02 C0 95 A7 B4 03 07 07 05 C4 68 0E
 ```
 
 ### 3. COBS-encode and send
@@ -135,12 +137,13 @@ frame, decode it, and the first byte is the response variant index
 ## Host Implementation Checklist
 
 1. Open the USB serial port (find by VID:PID `1209:5741`)
-2. Implement varint and zigzag encoding/decoding
-3. Implement COBS encode/decode (use a library — available in every language)
-4. Build `SetConfig` with your desired radio parameters
-5. Send it, read back `Ok`
-6. Send `StartRx`, read back `Ok`
-7. Loop: read frames, decode `RxPacket` responses
-8. To transmit: send `Transmit` with payload, read back `TxDone`
+2. Implement varint encoding/decoding (for `u16`/`u32` and enum variants)
+3. Note: `u8` and `i8` are raw bytes, NOT varint/zigzag
+4. Implement COBS encode/decode (use a library — available in every language)
+5. Build `SetConfig` with your desired radio parameters (use `-128` for max TX power)
+6. Send it, read back `Ok`
+7. Send `StartRx`, read back `Ok`
+8. Loop: read frames, decode `RxPacket` responses
+9. To transmit: send `Transmit` with payload, read back `TxDone`
 
 See `examples/` for working Python implementations.
