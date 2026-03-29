@@ -426,12 +426,12 @@ def zigzag(n: int) -> bytes:
 
 
 def encode_radio_config(cfg: dict) -> bytes:
-    out = varint(cfg["freq_hz"])
-    out += varint(cfg["bw"])
-    out += varint(cfg["sf"])
-    out += varint(cfg["cr"])
-    out += varint(cfg["sync_word"])
-    out += zigzag(cfg["tx_power_dbm"])
+    out = varint(cfg["freq_hz"])     # u32: varint
+    out += varint(cfg["bw"])         # enum: varint variant index
+    out += struct.pack("B", cfg["sf"])  # u8: raw byte
+    out += struct.pack("B", cfg["cr"])  # u8: raw byte
+    out += varint(cfg["sync_word"])  # u16: varint
+    out += struct.pack("b", cfg["tx_power_dbm"])  # i8: raw byte (signed)
     return out
 
 
@@ -931,7 +931,8 @@ def _format_rssi_snr(rssi: int, snr: int) -> str:
 
 
 def configure_and_listen(ser: serial.Serial):
-    send_cmd(ser, {"type": "SetConfig", "config": RADIO_CONFIG}, "SetConfig 910.525/62.5k/SF7/CR4_5")
+    send_cmd(ser, {"type": "Ping"}, "Ping")
+    send_cmd(ser, {"type": "SetConfig", "config": RADIO_CONFIG}, "SetConfig 910.525/62.5k/SF7/CR4/5")
     send_cmd(ser, {"type": "StartRx"}, "StartRx")
 
     print(f"\n{BWHT}Listening for packets{RST} {DIM}(Ctrl+C to stop){RST}\n")

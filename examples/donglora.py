@@ -12,6 +12,7 @@ See docs/PROTOCOL.md for the full specification.
 import glob
 import struct
 import subprocess
+
 import serial
 import time
 from cobs import cobs
@@ -112,13 +113,17 @@ def decode_zigzag(data: bytes) -> tuple[int, bytes]:
 # ── Command encoding ─────────────────────────────────────────────
 
 def encode_config(cfg: dict) -> bytes:
-    """Encode a RadioConfig dict to postcard bytes."""
-    out = varint(cfg["freq_hz"])
-    out += varint(cfg["bw"])
-    out += varint(cfg["sf"])
-    out += varint(cfg["cr"])
-    out += varint(cfg["sync_word"])
-    out += zigzag(cfg["tx_power_dbm"])
+    """Encode a RadioConfig dict to postcard bytes.
+
+    Postcard wire format: u8/i8 are raw bytes, u16/u32 are varint,
+    i16/i32 are zigzag+varint, enums are varint variant index.
+    """
+    out = varint(cfg["freq_hz"])              # u32: varint
+    out += varint(cfg["bw"])                  # enum: varint variant index
+    out += struct.pack("B", cfg["sf"])        # u8: raw byte
+    out += struct.pack("B", cfg["cr"])        # u8: raw byte
+    out += varint(cfg["sync_word"])           # u16: varint
+    out += struct.pack("b", cfg["tx_power_dbm"])  # i8: raw signed byte
     return out
 
 

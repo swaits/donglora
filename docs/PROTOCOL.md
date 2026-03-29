@@ -26,8 +26,9 @@ Postcard is a compact binary format. The subset used by DongLoRa:
 | Type | Encoding |
 |------|----------|
 | `u8` | Raw byte |
+| `i8` | Raw byte (two's complement) |
 | `u16`, `u32` | Varint (LEB128: 7 data bits per byte, MSB = continuation) |
-| `i8`, `i16` | Zigzag then varint (`(n << 1) ^ (n >> bits-1)`) |
+| `i16`, `i32` | Zigzag then varint (`(n << 1) ^ (n >> bits-1)`) |
 | Enum variant | Varint of 0-based variant index, then variant fields |
 | `Option<T>` | `0x00` = None, `0x01` + T = Some |
 | `Vec<u8, N>` | Varint length, then raw bytes |
