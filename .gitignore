@@ -4,4 +4,4 @@
 src/board/mod.rs
 __pycache__/
 .hypothesis/
-corpus/generated/
+examples/meshcore/corpus/generated/

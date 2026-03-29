@@ -12,8 +12,8 @@ from pathlib import Path
 
 import jsonschema
 
-# Add tools/ to path so we can import the decoder
-sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+# Add meshcore/ directory to path so we can import the decoder
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from meshcore_rx import decode_meshcore_packet  # noqa: E402
 
 CORPUS_DIR = Path(__file__).parent
