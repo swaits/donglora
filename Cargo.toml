@@ -21,10 +21,9 @@ embassy-sync = "0.6"
 embassy-time = "0.3"
 embassy-usb = { version = "0.3", features = ["defmt"] }
 embassy-usb-driver = "0.1"
-heapless = { version = "0.8", features = ["serde"] }
+cobs = { version = "0.3", default-features = false }
+heapless = "0.8"
 lora-phy = "3.0"
-postcard = { version = "1.0", default-features = false }
-serde = { version = "1.0", default-features = false, features = ["derive"] }
 static_cell = "2.1"
 
 # Display rendering

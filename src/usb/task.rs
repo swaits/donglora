@@ -1,9 +1,13 @@
+//! USB CDC-ACM task: COBS-framed fixed-size LE command/response protocol.
+//!
+//! Reads COBS frames from USB, decodes them, parses commands, routes them
+//! to the radio or display task, and sends COBS-framed responses back.
+
 use defmt::warn;
 use embassy_executor::task;
 use embassy_futures::join::join;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, Receiver, Sender, State};
 use embassy_usb::Builder;
-use postcard::accumulator::{CobsAccumulator, FeedResult};
 use static_cell::StaticCell;
 
 use crate::board::UsbParts;
@@ -15,9 +19,8 @@ use crate::protocol::{Command, ErrorCode, Response};
 const MAX_FRAME: usize = 512;
 const MAX_PACKET: usize = 64;
 
-// Ensure MAX_FRAME can hold the largest possible COBS-encoded response.
-// Worst case: RxPacket with MAX_PAYLOAD bytes. Postcard overhead ~8 bytes,
-// COBS adds ceil(n/254)+1 bytes. 256+8+3 = 267. 512 is comfortably sufficient.
+// Worst case: tag(1) + rssi(2) + snr(2) + len(2) + payload(256) = 263 bytes.
+// COBS adds ceil(263/254)+1 = 3 bytes. 266 < 512. Plenty of room.
 const _: () = assert!(
     MAX_FRAME >= crate::protocol::MAX_PAYLOAD + 64,
     "MAX_FRAME too small for max payload + COBS overhead"
@@ -87,7 +90,12 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
 
     let mut read_buf = [0u8; MAX_PACKET];
     let mut write_buf = [0u8; MAX_FRAME];
-    let mut cobs_buf: CobsAccumulator<MAX_FRAME> = CobsAccumulator::new();
+    let mut cobs_encode_buf = [0u8; MAX_FRAME];
+
+    // COBS accumulator: collect bytes until 0x00 sentinel
+    let mut frame_buf = [0u8; MAX_FRAME];
+    let mut frame_len: usize = 0;
+
     let mut was_connected = false;
 
     loop {
@@ -103,41 +111,55 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                     Ok(0) => continue,
                     Ok(n) => n,
                     Err(_) => {
-                        cobs_buf = CobsAccumulator::new();
+                        frame_len = 0; // reset accumulator
                         embassy_time::Timer::after_millis(100).await;
                         continue;
                     }
                 };
 
-                let mut window = &read_buf[..n];
-                'cobs: while !window.is_empty() {
-                    window = match cobs_buf.feed::<Command>(window) {
-                        FeedResult::Consumed => break 'cobs,
-                        FeedResult::OverFull(remaining) => remaining,
-                        FeedResult::DeserError(remaining) => remaining,
-                        FeedResult::Success { data: cmd, remaining } => {
-                            route_command(
-                                cmd, commands, responses, display_commands, has_display,
-                            )
-                            .await;
-                            remaining
+                // Feed bytes into the COBS accumulator
+                for &byte in &read_buf[..n] {
+                    if byte == 0x00 {
+                        // End of COBS frame — decode and parse
+                        if frame_len > 0 {
+                            let mut decode_buf = [0u8; MAX_FRAME];
+                            if let Some(decoded_len) =
+                                cobs_decode(&frame_buf[..frame_len], &mut decode_buf)
+                            {
+                                if let Some(cmd) = Command::from_bytes(&decode_buf[..decoded_len]) {
+                                    route_command(
+                                        cmd, commands, responses, display_commands, has_display,
+                                    )
+                                    .await;
+                                }
+                            }
                         }
-                    };
+                        frame_len = 0;
+                    } else if frame_len < MAX_FRAME {
+                        frame_buf[frame_len] = byte;
+                        frame_len += 1;
+                    } else {
+                        // Frame too large — discard
+                        frame_len = 0;
+                    }
                 }
             }
             Either3::Second(response) => {
-                match postcard::to_slice_cobs(&response, &mut write_buf) {
-                    Ok(buf) => {
-                        for chunk in buf.chunks(MAX_PACKET) {
-                            if sender.write_packet(chunk).await.is_err() {
-                                warn!("USB write failed, response dropped");
-                                break;
-                            }
+                // Serialize response to fixed-size LE bytes, then COBS encode
+                let raw_len = response.to_bytes(&mut write_buf);
+                let encoded_len = cobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf);
+                // Append 0x00 sentinel
+                if encoded_len < cobs_encode_buf.len() {
+                    cobs_encode_buf[encoded_len] = 0x00;
+                    let frame = &cobs_encode_buf[..encoded_len + 1];
+                    for chunk in frame.chunks(MAX_PACKET) {
+                        if sender.write_packet(chunk).await.is_err() {
+                            warn!("USB write failed, response dropped");
+                            break;
                         }
                     }
-                    Err(_) => {
-                        warn!("response serialization failed");
-                    }
+                } else {
+                    warn!("COBS encode buffer overflow");
                 }
             }
             Either3::Third(()) => {
@@ -185,4 +207,38 @@ async fn route_command(
             commands.send(other).await;
         }
     }
+}
+
+/// Decode a COBS-encoded buffer (without the trailing 0x00 sentinel).
+/// Returns the number of decoded bytes, or None on error.
+fn cobs_decode(src: &[u8], dest: &mut [u8]) -> Option<usize> {
+    let mut si = 0;
+    let mut di = 0;
+    while si < src.len() {
+        let code = src[si] as usize;
+        si += 1;
+        if code == 0 {
+            return None; // unexpected zero in COBS data
+        }
+        for _ in 1..code {
+            if si >= src.len() || di >= dest.len() {
+                return None;
+            }
+            dest[di] = src[si];
+            di += 1;
+            si += 1;
+        }
+        if code < 0xFF && si < src.len() {
+            if di >= dest.len() {
+                return None;
+            }
+            dest[di] = 0;
+            di += 1;
+        }
+    }
+    // Strip trailing zero if present (COBS artifact)
+    if di > 0 && dest[di - 1] == 0 {
+        di -= 1;
+    }
+    Some(di)
 }
