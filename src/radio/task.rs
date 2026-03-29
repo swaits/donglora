@@ -1,8 +1,27 @@
+//! LoRa radio task: SX1262 state machine driven by host commands.
+//!
+//! Owns the radio peripheral exclusively. Receives [`Command`]s from the USB
+//! task, drives the SX1262 via [`lora_phy`], and sends [`Response`]s back.
+//! Publishes [`RadioStatus`] to the display task via a watch channel.
+//!
+//! # State machine
+//!
+//! ```text
+//! Idle ──StartRx──► Receiving ──StopRx──► Idle
+//!   │                    │
+//!   └──Transmit──► Transmitting ──TxDone──► (previous state)
+//! ```
+//!
+//! # Invariants
+//!
+//! - This task never panics. All errors are reported to the host or logged.
+//! - Config is validated before use (see [`RadioConfig::validate`]).
+
 use defmt::{error, info, warn};
 use embassy_executor::task;
 use embassy_futures::select::{select, Either};
 use embassy_time::Delay;
-use lora_phy::mod_params::{PacketStatus, RadioError};
+use lora_phy::mod_params::RadioError;
 use lora_phy::{LoRa, RxMode};
 
 use crate::board::{RadioDriver, RadioParts};
@@ -12,6 +31,22 @@ use crate::protocol::{self, Command, ErrorCode, RadioConfig, Response};
 const MAX_PAYLOAD: usize = protocol::MAX_PAYLOAD;
 
 type Radio = LoRa<RadioDriver, Delay>;
+
+// ── LoRa radio parameters ───────────────────────────────────────────
+
+/// Preamble length in symbols. 8 is the LoRa default.
+const PREAMBLE_LEN: u16 = 8;
+
+/// Explicit header mode (variable-length packets).
+const IMPLICIT_HEADER: bool = false;
+
+/// Enable CRC on received/transmitted packets.
+const CRC_ON: bool = true;
+
+/// Standard IQ polarity (not inverted).
+const IQ_INVERTED: bool = false;
+
+// ── Task entry point ────────────────────────────────────────────────
 
 #[task]
 pub async fn radio_task(
@@ -27,13 +62,18 @@ pub async fn radio_task(
         Ok(l) => l,
         Err(e) => {
             error!("radio init failed: {}", e);
-            responses.send(Response::Error(ErrorCode::InvalidConfig)).await;
+            responses
+                .send(Response::Error(ErrorCode::InvalidConfig))
+                .await;
+            // Radio is non-functional — respond to commands but can't do RF.
             loop {
                 let cmd = commands.receive().await;
                 if let Command::Ping = cmd {
                     responses.send(Response::Pong).await;
                 } else {
-                    responses.send(Response::Error(ErrorCode::InvalidConfig)).await;
+                    responses
+                        .send(Response::Error(ErrorCode::InvalidConfig))
+                        .await;
                 }
             }
         }
@@ -44,52 +84,73 @@ pub async fn radio_task(
 
     loop {
         if state.state == RadioState::Receiving {
-            match select(rx_once(&mut lora, &state, &mut rx_buf), commands.receive()).await {
-                Either::First(rx_result) => {
-                    match rx_result {
-                        Ok((len, pkt_status)) => {
-                            state.rx_count = state.rx_count.wrapping_add(1);
-                            let rssi = pkt_status.rssi;
-                            let snr = pkt_status.snr;
-                            state.last_rssi = Some(rssi);
-                            state.last_snr = Some(snr);
-                            status.sender().send(state.clone());
+            // Defensive: config must be Some when Receiving. If not, recover.
+            let cfg = match state.config {
+                Some(c) => c,
+                None => {
+                    warn!("BUG: receiving without config, returning to idle");
+                    state.state = RadioState::Idle;
+                    status.sender().send(state.clone());
+                    continue;
+                }
+            };
 
-                            let mut payload = heapless::Vec::new();
-                            let _ = payload.extend_from_slice(&rx_buf[..len as usize]);
-                            responses
-                                .send(Response::RxPacket {
-                                    rssi,
-                                    snr,
-                                    payload,
-                                })
-                                .await;
+            match select(rx_once(&mut lora, &cfg, &mut rx_buf), commands.receive()).await {
+                Either::First(rx_result) => match rx_result {
+                    Ok((len, pkt_status)) => {
+                        state.rx_count = state.rx_count.wrapping_add(1);
+                        state.last_rssi = Some(pkt_status.rssi);
+                        state.last_snr = Some(pkt_status.snr);
+                        status.sender().send(state.clone());
 
-                            if let Err(e) = start_rx(&mut lora, &state).await {
-                                warn!("restart RX failed: {}", e);
-                                state.state = RadioState::Idle;
-                                status.sender().send(state.clone());
-                            }
+                        let copy_len = (len as usize).min(MAX_PAYLOAD);
+                        if (len as usize) > copy_len {
+                            warn!("RX payload truncated: {} > {}", len, MAX_PAYLOAD);
                         }
-                        Err(e) => {
-                            warn!("RX error: {}", e);
-                            if start_rx(&mut lora, &state).await.is_err() {
-                                state.state = RadioState::Idle;
-                                status.sender().send(state.clone());
-                            }
+                        let mut payload = heapless::Vec::new();
+                        // copy_len <= MAX_PAYLOAD == Vec capacity, so this cannot fail.
+                        let _ = payload.extend_from_slice(&rx_buf[..copy_len]);
+
+                        responses
+                            .send(Response::RxPacket {
+                                rssi: pkt_status.rssi,
+                                snr: pkt_status.snr,
+                                payload,
+                            })
+                            .await;
+
+                        if let Err(e) = start_rx(&mut lora, &cfg).await {
+                            warn!("restart RX failed: {}", e);
+                            state.state = RadioState::Idle;
+                            status.sender().send(state.clone());
+                            responses
+                                .send(Response::Error(ErrorCode::RadioBusy))
+                                .await;
                         }
                     }
-                }
+                    Err(e) => {
+                        warn!("RX error: {}", e);
+                        if start_rx(&mut lora, &cfg).await.is_err() {
+                            state.state = RadioState::Idle;
+                            status.sender().send(state.clone());
+                            responses
+                                .send(Response::Error(ErrorCode::RadioBusy))
+                                .await;
+                        }
+                    }
+                },
                 Either::Second(cmd) => {
-                    handle_cmd(cmd, &mut lora, &mut state, responses, status, &mut rx_buf).await;
+                    handle_cmd(cmd, &mut lora, &mut state, responses, status).await;
                 }
             }
         } else {
             let cmd = commands.receive().await;
-            handle_cmd(cmd, &mut lora, &mut state, responses, status, &mut rx_buf).await;
+            handle_cmd(cmd, &mut lora, &mut state, responses, status).await;
         }
     }
 }
+
+// ── Command handler ─────────────────────────────────────────────────
 
 async fn handle_cmd(
     cmd: Command,
@@ -97,7 +158,6 @@ async fn handle_cmd(
     state: &mut RadioStatus,
     responses: &ResponseChannel,
     status: &StatusWatch,
-    _rx_buf: &mut [u8],
 ) {
     match cmd {
         Command::Ping => {
@@ -107,17 +167,26 @@ async fn handle_cmd(
             if let Some(cfg) = state.config {
                 responses.send(Response::Config(cfg)).await;
             } else {
-                responses.send(Response::Error(ErrorCode::NotConfigured)).await;
+                responses
+                    .send(Response::Error(ErrorCode::NotConfigured))
+                    .await;
             }
         }
         Command::SetConfig(cfg) => {
-            state.config = Some(cfg);
-            status.sender().send(state.clone());
-            responses.send(Response::Ok).await;
+            if let Err(reason) = cfg.validate() {
+                warn!("SetConfig rejected: {}", reason);
+                responses
+                    .send(Response::Error(ErrorCode::InvalidConfig))
+                    .await;
+            } else {
+                state.config = Some(cfg);
+                status.sender().send(state.clone());
+                responses.send(Response::Ok).await;
+            }
         }
         Command::StartRx => {
-            if state.config.is_some() {
-                match start_rx(lora, state).await {
+            if let Some(cfg) = state.config {
+                match start_rx(lora, &cfg).await {
                     Ok(()) => {
                         state.state = RadioState::Receiving;
                         status.sender().send(state.clone());
@@ -125,14 +194,20 @@ async fn handle_cmd(
                     }
                     Err(e) => {
                         warn!("StartRx failed: {}", e);
-                        responses.send(Response::Error(ErrorCode::InvalidConfig)).await;
+                        responses
+                            .send(Response::Error(ErrorCode::InvalidConfig))
+                            .await;
                     }
                 }
             } else {
-                responses.send(Response::Error(ErrorCode::NotConfigured)).await;
+                responses
+                    .send(Response::Error(ErrorCode::NotConfigured))
+                    .await;
             }
         }
         Command::StopRx => {
+            // Best-effort: if standby fails, radio is in unknown state
+            // but there's nothing useful we can do except continue.
             let _ = lora.enter_standby().await;
             state.state = RadioState::Idle;
             status.sender().send(state.clone());
@@ -142,6 +217,14 @@ async fn handle_cmd(
         Command::Transmit { config, payload } => {
             let tx_config = config.or(state.config);
             if let Some(cfg) = tx_config {
+                if let Err(reason) = cfg.validate() {
+                    warn!("TX config rejected: {}", reason);
+                    responses
+                        .send(Response::Error(ErrorCode::InvalidConfig))
+                        .await;
+                    return;
+                }
+
                 let was_receiving = state.state == RadioState::Receiving;
                 state.state = RadioState::Transmitting;
                 status.sender().send(state.clone());
@@ -153,28 +236,35 @@ async fn handle_cmd(
                     }
                     Err(e) => {
                         warn!("TX failed: {}", e);
-                        responses.send(Response::Error(ErrorCode::TxTimeout)).await;
+                        responses
+                            .send(Response::Error(ErrorCode::TxTimeout))
+                            .await;
                     }
                 }
 
+                // Restore previous state. If we were receiving, restart RX.
                 state.state = if was_receiving {
-                    if start_rx(lora, state).await.is_ok() {
-                        RadioState::Receiving
-                    } else {
-                        RadioState::Idle
+                    match start_rx(lora, &cfg).await {
+                        Ok(()) => RadioState::Receiving,
+                        Err(e) => {
+                            warn!("post-TX RX restart failed: {}", e);
+                            RadioState::Idle
+                        }
                     }
                 } else {
                     RadioState::Idle
                 };
                 status.sender().send(state.clone());
             } else {
-                responses.send(Response::Error(ErrorCode::NotConfigured)).await;
+                responses
+                    .send(Response::Error(ErrorCode::NotConfigured))
+                    .await;
             }
         }
     }
 }
 
-// ── LoRa helpers ─────────────────────────────────────────────────────
+// ── LoRa helpers ────────────────────────────────────────────────────
 
 fn to_bw(bw: protocol::Bandwidth) -> lora_phy::mod_params::Bandwidth {
     use lora_phy::mod_params::Bandwidth::*;
@@ -202,47 +292,54 @@ fn to_sf(sf: u8) -> lora_phy::mod_params::SpreadingFactor {
         10 => _10,
         11 => _11,
         12 => _12,
-        _ => _7,
+        _ => _7, // validated earlier, but safe default
     }
 }
 
 fn to_cr(cr: u8) -> lora_phy::mod_params::CodingRate {
     use lora_phy::mod_params::CodingRate::*;
     match cr {
-        5 => _4_5,
         6 => _4_6,
         7 => _4_7,
         8 => _4_8,
-        _ => {
-            debug_assert!(false, "BUG: unvalidated CR {}", cr);
-            _4_5
-        }
+        _ => _4_5, // validated earlier, but safe default
     }
 }
 
-async fn start_rx(lora: &mut Radio, state: &RadioStatus) -> Result<(), RadioError> {
-    let cfg = state.config.unwrap();
-    let mdltn = lora.create_modulation_params(to_sf(cfg.sf), to_bw(cfg.bw), to_cr(cfg.cr), cfg.freq_hz)?;
-    let pkt = lora.create_rx_packet_params(8, false, MAX_PAYLOAD as u8, true, false, &mdltn)?;
-    lora.prepare_for_rx(RxMode::Continuous, &mdltn, &pkt).await?;
-    Ok(())
+/// Create modulation parameters from a validated config.
+fn modulation_params(
+    lora: &mut Radio,
+    cfg: &RadioConfig,
+) -> Result<lora_phy::mod_params::ModulationParams, RadioError> {
+    lora.create_modulation_params(to_sf(cfg.sf), to_bw(cfg.bw), to_cr(cfg.cr), cfg.freq_hz)
+}
+
+async fn start_rx(lora: &mut Radio, cfg: &RadioConfig) -> Result<(), RadioError> {
+    let mdltn = modulation_params(lora, cfg)?;
+    let pkt = lora.create_rx_packet_params(
+        PREAMBLE_LEN, IMPLICIT_HEADER, MAX_PAYLOAD as u8, CRC_ON, IQ_INVERTED, &mdltn,
+    )?;
+    lora.prepare_for_rx(RxMode::Continuous, &mdltn, &pkt).await
 }
 
 async fn rx_once(
     lora: &mut Radio,
-    state: &RadioStatus,
+    cfg: &RadioConfig,
     buf: &mut [u8],
-) -> Result<(u8, PacketStatus), RadioError> {
-    let cfg = state.config.unwrap();
-    let mdltn = lora.create_modulation_params(to_sf(cfg.sf), to_bw(cfg.bw), to_cr(cfg.cr), cfg.freq_hz)?;
-    let pkt = lora.create_rx_packet_params(8, false, MAX_PAYLOAD as u8, true, false, &mdltn)?;
+) -> Result<(u8, lora_phy::mod_params::PacketStatus), RadioError> {
+    let mdltn = modulation_params(lora, cfg)?;
+    let pkt = lora.create_rx_packet_params(
+        PREAMBLE_LEN, IMPLICIT_HEADER, MAX_PAYLOAD as u8, CRC_ON, IQ_INVERTED, &mdltn,
+    )?;
     lora.rx(&pkt, buf).await
 }
 
 async fn do_tx(lora: &mut Radio, cfg: &RadioConfig, payload: &[u8]) -> Result<(), RadioError> {
-    let mdltn = lora.create_modulation_params(to_sf(cfg.sf), to_bw(cfg.bw), to_cr(cfg.cr), cfg.freq_hz)?;
-    let mut tx_pkt = lora.create_tx_packet_params(8, false, true, false, &mdltn)?;
-    lora.prepare_for_tx(&mdltn, &mut tx_pkt, cfg.tx_power_dbm as i32, payload).await?;
-    lora.tx().await?;
-    Ok(())
+    let mdltn = modulation_params(lora, cfg)?;
+    let mut tx_pkt = lora.create_tx_packet_params(
+        PREAMBLE_LEN, IMPLICIT_HEADER, CRC_ON, IQ_INVERTED, &mdltn,
+    )?;
+    lora.prepare_for_tx(&mdltn, &mut tx_pkt, cfg.tx_power_dbm as i32, payload)
+        .await?;
+    lora.tx().await
 }

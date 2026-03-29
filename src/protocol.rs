@@ -23,6 +23,7 @@ pub enum Bandwidth {
 /// Complete LoRa radio configuration.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 pub struct RadioConfig {
+    /// Frequency in Hz (150_000_000 - 960_000_000 for SX1262).
     pub freq_hz: u32,
     pub bw: Bandwidth,
     /// Spreading factor (5-12).
@@ -30,7 +31,27 @@ pub struct RadioConfig {
     /// Coding rate denominator (5-8). E.g. 5 = CR 4/5, 8 = CR 4/8.
     pub cr: u8,
     pub sync_word: u16,
+    /// Transmit power in dBm (-9 to +22 for SX1262).
     pub tx_power_dbm: i8,
+}
+
+impl RadioConfig {
+    /// Validate all fields are within SX1262 hardware limits.
+    pub fn validate(&self) -> Result<(), &'static str> {
+        if !(150_000_000..=960_000_000).contains(&self.freq_hz) {
+            return Err("frequency out of range (150-960 MHz)");
+        }
+        if !(5..=12).contains(&self.sf) {
+            return Err("spreading factor out of range (5-12)");
+        }
+        if !(5..=8).contains(&self.cr) {
+            return Err("coding rate out of range (5-8)");
+        }
+        if !(-9..=22).contains(&self.tx_power_dbm) {
+            return Err("TX power out of range (-9 to +22 dBm)");
+        }
+        Ok(())
+    }
 }
 
 /// Host → firmware commands.

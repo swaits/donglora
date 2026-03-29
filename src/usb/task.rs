@@ -1,3 +1,4 @@
+use defmt::warn;
 use embassy_executor::task;
 use embassy_futures::join::join;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, Receiver, Sender, State};
@@ -13,6 +14,14 @@ use crate::protocol::{Command, ErrorCode, Response};
 
 const MAX_FRAME: usize = 512;
 const MAX_PACKET: usize = 64;
+
+// Ensure MAX_FRAME can hold the largest possible COBS-encoded response.
+// Worst case: RxPacket with MAX_PAYLOAD bytes. Postcard overhead ~8 bytes,
+// COBS adds ceil(n/254)+1 bytes. 256+8+3 = 267. 512 is comfortably sufficient.
+const _: () = assert!(
+    MAX_FRAME >= crate::protocol::MAX_PAYLOAD + 64,
+    "MAX_FRAME too small for max payload + COBS overhead"
+);
 
 #[task]
 pub async fn usb_task(
@@ -117,9 +126,17 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                 }
             }
             Either3::Second(response) => {
-                if let Ok(buf) = postcard::to_slice_cobs(&response, &mut write_buf) {
-                    for chunk in buf.chunks(MAX_PACKET) {
-                        let _ = sender.write_packet(chunk).await;
+                match postcard::to_slice_cobs(&response, &mut write_buf) {
+                    Ok(buf) => {
+                        for chunk in buf.chunks(MAX_PACKET) {
+                            if sender.write_packet(chunk).await.is_err() {
+                                warn!("USB write failed, response dropped");
+                                break;
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        warn!("response serialization failed");
                     }
                 }
             }
