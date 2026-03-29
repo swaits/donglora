@@ -80,61 +80,27 @@ def read_frame(ser: serial.Serial) -> bytes | None:
         return None
 
 
-# ── Postcard encoding ────────────────────────────────────────────
-
-def varint(n: int) -> bytes:
-    out = []
-    while n >= 0x80:
-        out.append((n & 0x7F) | 0x80)
-        n >>= 7
-    out.append(n & 0x7F)
-    return bytes(out)
-
-
-def zigzag(n: int) -> bytes:
-    return varint((n << 1) ^ (n >> 31) if n >= 0 else ((-n - 1) << 1) | 1)
-
-
-def decode_varint(data: bytes) -> tuple[int, bytes]:
-    n, shift = 0, 0
-    for i, b in enumerate(data):
-        n |= (b & 0x7F) << shift
-        shift += 7
-        if not (b & 0x80):
-            return n, data[i + 1:]
-    return n, b""
-
-
-def decode_zigzag(data: bytes) -> tuple[int, bytes]:
-    n, rest = decode_varint(data)
-    return (n >> 1) ^ -(n & 1), rest
-
-
-# ── Command encoding ─────────────────────────────────────────────
+# ── Fixed-size LE encoding ────────────────────────────────────────
 
 def encode_config(cfg: dict) -> bytes:
-    """Encode a RadioConfig dict to postcard bytes.
-
-    Postcard wire format: u8/i8 are raw bytes, u16/u32 are varint,
-    i16/i32 are zigzag+varint, enums are varint variant index.
-    """
-    out = varint(cfg["freq_hz"])              # u32: varint
-    out += varint(cfg["bw"])                  # enum: varint variant index
-    out += struct.pack("B", cfg["sf"])        # u8: raw byte
-    out += struct.pack("B", cfg["cr"])        # u8: raw byte
-    out += varint(cfg["sync_word"])           # u16: varint
-    out += struct.pack("b", cfg["tx_power_dbm"])  # i8: raw signed byte
-    return out
+    """Encode a RadioConfig to 10 fixed-size LE bytes."""
+    return struct.pack("<IBBBHB",
+        cfg["freq_hz"],
+        cfg["bw"],
+        cfg["sf"],
+        cfg["cr"],
+        cfg["sync_word"],
+        cfg["tx_power_dbm"] & 0xFF,  # i8 as unsigned byte
+    )
 
 
 def encode_command(cmd: str, **kwargs) -> bytes:
-    """Encode a command name + kwargs to postcard bytes."""
-    commands = {
+    """Encode a command to fixed-size LE bytes."""
+    tags = {
         "Ping": 0, "GetConfig": 1, "SetConfig": 2, "StartRx": 3,
         "StopRx": 4, "Transmit": 5, "DisplayOn": 6, "DisplayOff": 7,
     }
-    idx = commands[cmd]
-    out = varint(idx)
+    out = bytes([tags[cmd]])
     if cmd == "SetConfig":
         out += encode_config(kwargs["config"])
     elif cmd == "Transmit":
@@ -144,36 +110,37 @@ def encode_command(cmd: str, **kwargs) -> bytes:
         else:
             out += b"\x01" + encode_config(config)
         payload = kwargs["payload"]
-        out += varint(len(payload)) + payload
+        out += struct.pack("<H", len(payload)) + payload
     return out
 
 
 # ── Response decoding ────────────────────────────────────────────
 
 def decode_response(data: bytes) -> dict:
-    """Decode a postcard-encoded response into a dict."""
+    """Decode a fixed-size LE response."""
     if not data:
         return {"type": "Empty"}
-    variant = data[0]
+    tag = data[0]
     rest = data[1:]
-    if variant == 0:
+    if tag == 0:
         return {"type": "Pong"}
-    elif variant == 1:
+    elif tag == 1:
         return {"type": "Config", "raw": rest.hex()}
-    elif variant == 2:
-        rssi, rest = decode_zigzag(rest)
-        snr, rest = decode_zigzag(rest)
-        plen, rest = decode_varint(rest)
-        return {"type": "RxPacket", "rssi": rssi, "snr": snr, "payload": rest[:plen]}
-    elif variant == 3:
+    elif tag == 2:
+        rssi = struct.unpack_from("<h", rest, 0)[0]
+        snr = struct.unpack_from("<h", rest, 2)[0]
+        plen = struct.unpack_from("<H", rest, 4)[0]
+        payload = rest[6:6 + plen]
+        return {"type": "RxPacket", "rssi": rssi, "snr": snr, "payload": payload}
+    elif tag == 3:
         return {"type": "TxDone"}
-    elif variant == 4:
+    elif tag == 4:
         return {"type": "Ok"}
-    elif variant == 5:
+    elif tag == 5:
         code = rest[0] if rest else -1
         return {"type": "Error", "code": code}
     else:
-        return {"type": f"Unknown({variant})"}
+        return {"type": f"Unknown({tag})"}
 
 
 # ── High-level helpers ───────────────────────────────────────────
