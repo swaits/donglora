@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "11871b7085486c56de68afbc604eab6c27aefe6ca74f00a9a05033698fe68f8be58dbeba5da1faf0c6fc421423ff25ebc3c3ba84204b405aa7000003f652ef909479048252b332735ca7ea9d76d26e07e6ed37514cf2fce71b5775368749403dee0196bc8aabbfd4ceaeffbff7c569dc8aa0428ef908a6b88d8b4e92421f9503b27b45f57759594a33",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "1b7085",
+        "486c56",
+        "de68af",
+        "bc604e",
+        "ab6c27",
+        "aefe6c",
+        "a74f00"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "a9a05033",
+      "timestamp": 42842,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": 60.1045,
+          "lon": -179.9957
+        },
+        "name": "wYYJ3"
+      }
+    }
+  }
+}

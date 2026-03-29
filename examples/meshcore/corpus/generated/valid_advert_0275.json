@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124681b547be9a53a3d9138976eb89f1c7620dffbe3fb3c7d62575c71ba63819f9205573b9167dd10c7db995afc6ffffffffe283dfaac44b2f23c71d2acaf07a09a9e8f99a5c602ceb6915243dc2b6674ce46cb657a2feda1f7b03e85b772cb8060fd2ef4432dbb6099766f0e30afe781f7b913e95a3fa725946f52d496e66696e697479",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "81b5",
+        "47be",
+        "9a53",
+        "a3d9",
+        "1389",
+        "76eb"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "89f1c762",
+      "timestamp": 4294967295,
+      "advert": {
+        "flags": 145,
+        "node_type": "chat",
+        "location": {
+          "lat": -89.9427,
+          "lon": -179.939
+        },
+        "name": "-Infinity"
+      }
+    }
+  }
+}

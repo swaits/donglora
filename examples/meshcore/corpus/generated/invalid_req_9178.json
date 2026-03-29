@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: REQ tdirect",
+  "tags": [
+    "req",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "43c7f9b4810f415e53",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "REQ",
+    "error": "not_meshcore"
+  }
+}

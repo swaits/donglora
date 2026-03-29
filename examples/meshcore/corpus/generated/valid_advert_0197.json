@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124695c051529c31ca50b488f0f30c39dc79797349df8aac3318e52fa92b458a32b69ac4b0aab58488a9c95fbc2abf5900001aa2a1ada711627ce99939c4cb9acf09d49f04a153960213a6c7da0724f9ab4b2b380028cc4d5a135a8da73dee6ef009ce7ea8e8a5b1088a5eaecfd9cb0c25e8929a3f2afd3ed745f54e4c2c43",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "95c0",
+        "5152",
+        "9c31",
+        "ca50",
+        "b488",
+        "f0f3"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "0c39dc79",
+      "timestamp": 22975,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -47.5629,
+          "lon": -179.9723
+        },
+        "name": "NL,C"
+      }
+    }
+  }
+}

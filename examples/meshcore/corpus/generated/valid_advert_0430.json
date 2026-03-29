@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "110aae5e5280ec425cb5676b579a2c507faef36a96d3d0a1575e93559b57d14de295409c4c7d4dda2e37301145dd8b2539c18e31b39f5ca5bb4f0eac8518a98aa83230fea3c6c10a73607367b08cbd80281a676e96b0070f4ca469fc4ca569482f200e3f8b41fc22ce12484aad4511f5834b4a592d66",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "ae",
+        "5e",
+        "52",
+        "80",
+        "ec",
+        "42",
+        "5c",
+        "b5",
+        "67",
+        "6b"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "579a2c50",
+      "timestamp": 629923141,
+      "advert": {
+        "flags": 131,
+        "node_type": "room",
+        "location": null,
+        "name": "KJY-f"
+      }
+    }
+  }
+}

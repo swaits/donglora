@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: CONTROL tdirect",
+  "tags": [
+    "control",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "2fdeba44b66e24ab44d9e5f68099",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "CONTROL",
+    "error": "not_meshcore"
+  }
+}

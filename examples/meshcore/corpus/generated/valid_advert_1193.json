@@ -1,0 +1,37 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12879dd4a8e233bce4f0aa4b58fff7cb0e6f2e71f6ed58086615d6c632be5b346b992692d80827c05b25a7aa3fdd367cfec0701be64cf7a0c10000f56325e2bec21dbb307439e616f6e1a874c4f9fd5f084b7be0e83b6c94ee4501edda2d3e42108f0b93371d5e0a1fb9f1b32860616569dd8645444cf12d2025bf8220654270427674",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "9dd4a8",
+        "e233bc",
+        "e4f0aa",
+        "4b58ff",
+        "f7cb0e",
+        "6f2e71",
+        "f6ed58"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "086615d6",
+      "timestamp": 49568,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": " eBpBvt"
+      }
+    }
+  }
+}

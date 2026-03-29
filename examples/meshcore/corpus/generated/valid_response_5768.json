@@ -1,0 +1,29 @@
+{
+  "description": "Generated valid: RESPONSE direct",
+  "tags": [
+    "response",
+    "direct"
+  ],
+  "packet_hex": "06833def9e56adb3521cc155247e3b0767de2b80f1d1cd5737bf51d6c43a0653ea917b2217967588219db1f781b6ad484939acb5b8b9a94f9d171544afde6075cd6b21229aecc2ec",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "RESPONSE",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "3def9e",
+        "56adb3",
+        "521cc1"
+      ]
+    },
+    "payload": {
+      "dst": "55",
+      "src": "24",
+      "mac": "7e3b",
+      "ciphertext_len": 57
+    }
+  }
+}

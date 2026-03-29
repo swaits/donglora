@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: PATH flood",
+  "tags": [
+    "path",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "21c1c921bb",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "PATH",
+    "error": "bad_framing"
+  }
+}

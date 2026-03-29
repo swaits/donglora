@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124a22aa7af46cfce7554b1d9432a3cda5376172ebe4d958fb2397eb32d8c9b2472841bf8ddd0d9f57d6cb55ecffe078f9dea09bf4cbc300000070d85e761dbc74e9ea979e85571db182d1b8f8d95edfe3ff0c52529c61aa1dd3de88aa556ce805ad32a482ff13aeaf348e7060f1660268f24cbb9078633bccfa82517a55753f21",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "22aa",
+        "7af4",
+        "6cfc",
+        "e755",
+        "4b1d",
+        "9432",
+        "a3cd",
+        "a537",
+        "6172",
+        "ebe4"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "d958fb23",
+      "timestamp": 195,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": "QzUu?!"
+      }
+    }
+  }
+}

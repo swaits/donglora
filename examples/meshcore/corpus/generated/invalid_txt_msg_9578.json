@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TXT_MSG flood",
+  "tags": [
+    "txt_msg",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "09c22cfa0a7b9d441837261680fc9e92cd612f2203f4",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "TXT_MSG",
+    "error": "bad_framing"
+  }
+}

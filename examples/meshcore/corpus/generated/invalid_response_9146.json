@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE direct",
+  "tags": [
+    "response",
+    "direct",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "8641",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "RESPONSE",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "1284c55f1f026365a974cfce2fec07674fd22fac423a9a58a56953a9ea08f2aef854d6f865d1771909ff061d8c9eb4310000165ccda32ea9b1ec7d1c69302dfd525d7ca66583f4a0745e03c0957bebc00f34b054e29a7df68ac2336bef7e06b79c65f2dbd35eb24f0b0214e4bc20f1defbe7824a522633",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "c55f1f",
+        "026365",
+        "a974cf",
+        "ce2fec"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "07674fd2",
+      "timestamp": 12724,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": "JR&3"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12461934fe17f250e79dc5c048a6d25f6f9085daf6808c7c31105a3e666508ca5d1ee552076d681de01578c7b12c46000000db185e40ed7bb91455a796d2ac87ebb03fef735c2652d3ff4b268216a8cd8b82607a589ab6df6f21d4676510c3bc1d2c4a222962d93c1cb006a7961fd66a86a09481b5a2fa999c88f74c505431",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "1934",
+        "fe17",
+        "f250",
+        "e79d",
+        "c5c0",
+        "48a6"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "d25f6f90",
+      "timestamp": 70,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -90.0,
+          "lon": -142.042
+        },
+        "name": "LPT1"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1186bf107f43864f9c65e12f7c9a16f54bf9b1e712c282758b116dee7efabbe0bcdfa981c9b6fbff7ad3916e67fbb597fba7f2e0230381e1187bc3c9d4f8f8406e5f6ba5c2a0f50ddb11007338b08fe3360edbd0fd3b67dd06f131c3f8afa2796cde584a3c256ef40c852538876573b41c768f05bf01391682636354562244435d5a6a772c675066567b384145",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "bf107f",
+        "43864f",
+        "9c65e1",
+        "2f7c9a",
+        "16f54b",
+        "f9b1e7"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "12c28275",
+      "timestamp": 3783328547,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": "ccTV\"DC]Zjw,gPfV{8AE"
+      }
+    }
+  }
+}

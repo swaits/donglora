@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: MULTIPART tdirect",
+  "tags": [
+    "multipart",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "ab3b",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "MULTIPART",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE flood",
+  "tags": [
+    "response",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "c5e98b",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RESPONSE",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_DATA tdirect",
+  "tags": [
+    "grp_data",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "db26",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "GRP_DATA",
+    "error": "not_meshcore"
+  }
+}

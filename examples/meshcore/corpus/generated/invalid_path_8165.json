@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: PATH direct",
+  "tags": [
+    "path",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "22e6e76a62a68c341a9a79d0040188ddd55f8f",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "PATH",
+    "error": "bad_framing"
+  }
+}

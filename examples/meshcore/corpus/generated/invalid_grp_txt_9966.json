@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_TXT tflood",
+  "tags": [
+    "grp_txt",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "14d7624559ca9ee6",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "GRP_TXT",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RAW_CUSTOM tdirect",
+  "tags": [
+    "raw_custom",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "bf28220e51",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "RAW_CUSTOM",
+    "error": "not_meshcore"
+  }
+}

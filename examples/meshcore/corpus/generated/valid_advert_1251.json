@@ -1,0 +1,41 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1188efeb4cf4d6b6f02a6b7daf4f2841fe3725f29fabda43bf1247b62c4e2662cb173a654fab149e9762e0a10489c858a163bfae65191173468b8c91023b240174c2e0e216bbc3ba1065ec58cb1c6f2cd452517ec0b362eb2cc89a4c22e38c0077eedc63d1cc4c497502a83927308dca7d4fc6bb3f41a59348ffeea47984946ceea2fa8bd745f551673739",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "efeb4c",
+        "f4d6b6",
+        "f02a6b",
+        "7daf4f",
+        "2841fe",
+        "3725f2",
+        "9fabda",
+        "43bf12"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "47b62c4e",
+      "timestamp": 990024076,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -89.9854,
+          "lon": -179.9722
+        },
+        "name": "Qg79"
+      }
+    }
+  }
+}

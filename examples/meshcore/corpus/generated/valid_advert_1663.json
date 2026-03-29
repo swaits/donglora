@@ -1,0 +1,43 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "120a6e8193310eaf83273c8915692ffdd45b11b5b897ae253500abfad1bc42fb19cc548b2f8e2d07483ae18cb52b0000324439a91e911034d629c136422eccbb61ace56588252399bdcbbe8e51675cc1a3d10c640f3f3c60a90ced2c7048321795f694ffef3fbbaaa3c19ed776360e4692407fa3fa14e145f5585d54686354",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "6e",
+        "81",
+        "93",
+        "31",
+        "0e",
+        "af",
+        "83",
+        "27",
+        "3c",
+        "89"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "15692ffd",
+      "timestamp": 11189,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -89.9484,
+          "lon": -179.9698
+        },
+        "name": "X]ThcT"
+      }
+    }
+  }
+}

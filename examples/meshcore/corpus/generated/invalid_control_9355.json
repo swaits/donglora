@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: CONTROL flood",
+  "tags": [
+    "control",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "6d9ccc397a11ca62686aaea2",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "CONTROL",
+    "error": "not_meshcore"
+  }
+}

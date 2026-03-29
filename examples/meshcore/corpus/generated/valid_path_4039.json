@@ -1,0 +1,31 @@
+{
+  "description": "Generated valid: PATH flood",
+  "tags": [
+    "path",
+    "flood"
+  ],
+  "packet_hex": "21456eca97f549752acd05b2237c037a42ef0ab735afe047309af310a04f16a2398ca649dac2",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "PATH",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "6eca",
+        "97f5",
+        "4975",
+        "2acd",
+        "05b2"
+      ]
+    },
+    "payload": {
+      "dst": "23",
+      "src": "7c",
+      "mac": "037a",
+      "ciphertext_len": 22
+    }
+  }
+}

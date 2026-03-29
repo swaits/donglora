@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ACK direct",
+  "tags": [
+    "ack",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "0e09806d4e68cd358a7a",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ACK",
+    "error": "bad_framing"
+  }
+}

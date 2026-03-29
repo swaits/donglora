@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: REQ tflood",
+  "tags": [
+    "req",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "8087577d",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "REQ",
+    "error": "not_meshcore"
+  }
+}

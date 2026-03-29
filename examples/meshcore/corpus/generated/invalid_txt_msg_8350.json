@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TXT_MSG tdirect",
+  "tags": [
+    "txt_msg",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "8b40d946c6a084",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "TXT_MSG",
+    "error": "not_meshcore"
+  }
+}

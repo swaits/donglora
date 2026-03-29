@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE tflood",
+  "tags": [
+    "response",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "0414fad977f12688b59f06",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "RESPONSE",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12492f776c88aa09b600fb97c4c12620e5425e7245918a0df74366a084730628fdc39774c0f44ee7f5486101825569c65731b7be4780dbd440b8ed5ea5f2f3b0909e18a30ef9a5d4804aaf343d77bbdf54218daa45cd30f7ab746f1e483d5a357da0995b0dd0b03139dce03426c06a6c38fdfce7c1028d5b913946a3faf46b45f543634842",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "2f77",
+        "6c88",
+        "aa09",
+        "b600",
+        "fb97",
+        "c4c1",
+        "2620",
+        "e542",
+        "5e72"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "45918a0d",
+      "timestamp": 3571155015,
+      "advert": {
+        "flags": 145,
+        "node_type": "chat",
+        "location": {
+          "lat": -89.963,
+          "lon": -179.9998
+        },
+        "name": "CcHB"
+      }
+    }
+  }
+}

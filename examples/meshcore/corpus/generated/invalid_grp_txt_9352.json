@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_TXT flood",
+  "tags": [
+    "grp_txt",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "15e7e3574e901e8c15d06ad74d6fb3",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "GRP_TXT",
+    "error": "bad_framing"
+  }
+}

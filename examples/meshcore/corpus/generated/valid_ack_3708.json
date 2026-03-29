@@ -1,0 +1,31 @@
+{
+  "description": "Generated valid: ACK flood",
+  "tags": [
+    "ack",
+    "flood"
+  ],
+  "packet_hex": "0d48c1f02cb15579e54e995933f531bb9dd929000000",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ACK",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "c1f0",
+        "2cb1",
+        "5579",
+        "e54e",
+        "9959",
+        "33f5",
+        "31bb",
+        "9dd9"
+      ]
+    },
+    "payload": {
+      "ack_crc": 41
+    }
+  }
+}

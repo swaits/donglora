@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE direct",
+  "tags": [
+    "response",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "06d34583214c07b9f2563e8cc92a76b5c3d542c9fa56",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "RESPONSE",
+    "error": "bad_framing"
+  }
+}

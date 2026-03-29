@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "12d5ffbaff41446e66",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "error": "bad_framing"
+  }
+}

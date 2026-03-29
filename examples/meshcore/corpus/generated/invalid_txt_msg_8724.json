@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TXT_MSG flood",
+  "tags": [
+    "txt_msg",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "4995b4",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "TXT_MSG",
+    "error": "not_meshcore"
+  }
+}

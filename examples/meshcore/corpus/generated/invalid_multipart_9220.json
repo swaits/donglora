@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: MULTIPART tflood",
+  "tags": [
+    "multipart",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "a8aa7d502f",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "MULTIPART",
+    "error": "not_meshcore"
+  }
+}

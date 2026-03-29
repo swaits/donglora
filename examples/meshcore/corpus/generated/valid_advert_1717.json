@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "118a174bf0e575a8e2badfea4adc4498e34ad75f100b1c9f83ad0cc9c14a238046e2e22861dd32e45b0fa86cd2adb5d948316302f08a17b8dfd64d697c04c2e659b529230058e54fdfb0527aa9f29cf2f7685d5fd3b7163d3faf058e63ff897e28c40c14b520f180a00acbf253f4ef56502d3e789b74a74b03f99fb1a6f7650630d56763826135",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "174bf0",
+        "e575a8",
+        "e2badf",
+        "ea4adc",
+        "4498e3",
+        "4ad75f",
+        "100b1c",
+        "9f83ad",
+        "0cc9c1",
+        "4a2380"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "46e2e228",
+      "timestamp": 589935961,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": "a5"
+      }
+    }
+  }
+}

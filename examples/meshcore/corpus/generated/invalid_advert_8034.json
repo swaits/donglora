@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ADVERT tdirect",
+  "tags": [
+    "advert",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "131f9b93dd",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "ADVERT",
+    "error": "not_meshcore"
+  }
+}

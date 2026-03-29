@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12883ee6b58c3743afde5210fe0380b5cb72de92246d9edf7f7a420715b1dd0873e27f13924ead70b7c280015cf3a054438ea9ee906287306d8d89000000b54cdfd485c15a80884a8fa294980cec882bba512d231a2dcb74b5cd86d7c18087a16fee330cdbbeb3ad5a6115b1c141ff371475c0a9c227750f75593cda7d1783577a53",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "3ee6b5",
+        "8c3743",
+        "afde52",
+        "10fe03",
+        "80b5cb",
+        "72de92",
+        "246d9e",
+        "df7f7a"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "420715b1",
+      "timestamp": 137,
+      "advert": {
+        "flags": 131,
+        "node_type": "room",
+        "location": null,
+        "name": "WzS"
+      }
+    }
+  }
+}

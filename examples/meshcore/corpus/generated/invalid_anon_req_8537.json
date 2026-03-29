@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ANON_REQ direct",
+  "tags": [
+    "anon_req",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "1ec70c5e1321",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ANON_REQ",
+    "error": "bad_framing"
+  }
+}

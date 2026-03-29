@@ -1,0 +1,29 @@
+{
+  "description": "Generated valid: TXT_MSG flood",
+  "tags": [
+    "txt_msg",
+    "flood"
+  ],
+  "packet_hex": "098352d7a41a1dfc285cc1e2103538835af777e2661fd69ab1e4642a012a9a1f75d235e3263d51a439ce7dc2dd38b3c96d6f3d6b7825bd7ad3a3ba54c14fbc383f049b2d146e25",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "TXT_MSG",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "52d7a4",
+        "1a1dfc",
+        "285cc1"
+      ]
+    },
+    "payload": {
+      "dst": "e2",
+      "src": "10",
+      "mac": "3538",
+      "ciphertext_len": 56
+    }
+  }
+}

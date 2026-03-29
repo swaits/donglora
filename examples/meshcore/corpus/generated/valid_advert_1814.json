@@ -1,0 +1,35 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12824b04e890c36125f382b984c4f28e1a4799d9fc367c7941a73013b612e02e02303e14ebf8b255622219599184251becfcd019fbcc5ac8d9ad2d82ddb89989c5fe8e28fd70fe2645d212375e44dfdd11c9128cb391ee790ce40727d1a09f65d16fc830ac8018ce841d2e7b9132c74b00ff94ba0a5750",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "4b04e8",
+        "90c361"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "25f382b9",
+      "timestamp": 1494819426,
+      "advert": {
+        "flags": 145,
+        "node_type": "chat",
+        "location": {
+          "lat": 4.9662,
+          "lon": 180.0
+        },
+        "name": "WP"
+      }
+    }
+  }
+}

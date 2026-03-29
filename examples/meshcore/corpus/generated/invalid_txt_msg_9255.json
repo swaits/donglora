@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TXT_MSG direct",
+  "tags": [
+    "txt_msg",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "0ad9cd124f91fe960276fc12c5",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "TXT_MSG",
+    "error": "bad_framing"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1187d66c0e3009a2f74657b9b53d204e2a5cd276c05651654584fd37f99e6bd44de46f5aa3edbb8b2a40a5933e51f96febc1a65139bad9718300004e6e0d0d5fd6bebddb454af7aa61a97369c0986f716767a2357be6196ab9b8550cfe23aea1123659408195edadc6ab6e133e88e17bb8c5d88c8022baa37ab8c78447324566",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "d66c0e",
+        "3009a2",
+        "f74657",
+        "b9b53d",
+        "204e2a",
+        "5cd276",
+        "c05651"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "654584fd",
+      "timestamp": 33649,
+      "advert": {
+        "flags": 132,
+        "node_type": "sensor",
+        "location": null,
+        "name": "G2Ef"
+      }
+    }
+  }
+}

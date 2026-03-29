@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "118a61f8adbbd25b27afb30c72a84e30e61b311ab92584ea6df4cc90d3e6a3542c8bccef3133be40a3f5360d7f7ed7f4d6be8b97872f734db6111af18cc3489639fac9037cf2977ab02237314b7fd1b9e25a178ab97f2ae135813149067013f92809c69953abb287b3bfabb4fb88a6ec4183c647a02741ed447de6765e9fcf86686e8ccb847a3274",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "61f8ad",
+        "bbd25b",
+        "27afb3",
+        "0c72a8",
+        "4e30e6",
+        "1b311a",
+        "b92584",
+        "ea6df4",
+        "cc90d3",
+        "e6a354"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "2c8bccef",
+      "timestamp": 63568441,
+      "advert": {
+        "flags": 132,
+        "node_type": "sensor",
+        "location": null,
+        "name": "z2t"
+      }
+    }
+  }
+}

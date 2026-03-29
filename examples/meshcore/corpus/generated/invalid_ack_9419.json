@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ACK tdirect",
+  "tags": [
+    "ack",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "8fc682f983bcd7",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "ACK",
+    "error": "not_meshcore"
+  }
+}

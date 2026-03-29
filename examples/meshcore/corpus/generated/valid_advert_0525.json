@@ -1,0 +1,43 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "118afd37994e92b3c74e7adb4dc99420ab7ebd3ff97c387c1f08e01753f20db75dc82691f4d0e659f2aef4a82ba7fa0d1fe66dac20e1885846942a81d3a83b07d34d5f2637f3026422934a627942ae4cec094f53d10f327596e14af001b0fbd2eef76c07138da440a2907d5f1f62a39d6a8b9fb3e5c67774998eac0cb7a0fbc451c0548e935799a3fa4e8f15087d256e484a3069455c5d",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "fd3799",
+        "4e92b3",
+        "c74e7a",
+        "db4dc9",
+        "9420ab",
+        "7ebd3f",
+        "f97c38",
+        "7c1f08",
+        "e01753",
+        "f20db7"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "5dc82691",
+      "timestamp": 643780051,
+      "advert": {
+        "flags": 147,
+        "node_type": "room",
+        "location": {
+          "lat": -89.9417,
+          "lon": 135.6307
+        },
+        "name": "}%nHJ0iE\\]"
+      }
+    }
+  }
+}

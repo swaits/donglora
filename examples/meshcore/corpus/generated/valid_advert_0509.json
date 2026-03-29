@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1146e7b52243b76547d0d8360a5a669894b3f5c744fb3079c283104a32b4c5b674b82e0039d55f8641f126775372110000006634ad50bb3556989c57a781c58402967c1cdb3a5110128a4aa10f34e53671b9caa6a797cb7d29cb12d38f5aa224af95f680f6b709767314ec13d15e0a31f0d092d5b5a2fa167d45f54226",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "e7b5",
+        "2243",
+        "b765",
+        "47d0",
+        "d836",
+        "0a5a"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "669894b3",
+      "timestamp": 17,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -89.9999,
+          "lon": -179.9954
+        },
+        "name": "B&"
+      }
+    }
+  }
+}

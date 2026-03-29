@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "515142d7",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "error": "not_meshcore"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "description": "Generated valid: TXT_MSG direct",
+  "tags": [
+    "txt_msg",
+    "direct"
+  ],
+  "packet_hex": "0a84e5ff224d6b7b4aa545cca437e82b2e9f333117e38cb1cd604a7083924fdcdbcc47f0f8",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "TXT_MSG",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "e5ff22",
+        "4d6b7b",
+        "4aa545",
+        "cca437"
+      ]
+    },
+    "payload": {
+      "dst": "e8",
+      "src": "2b",
+      "mac": "2e9f",
+      "ciphertext_len": 19
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: REQ flood",
+  "tags": [
+    "req",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "01c16f1d5ba44d6104ee08",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "REQ",
+    "error": "bad_framing"
+  }
+}

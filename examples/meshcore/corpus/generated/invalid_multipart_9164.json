@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: MULTIPART flood",
+  "tags": [
+    "multipart",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "29d8b3d85eec35d98716f2cec9e5",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "MULTIPART",
+    "error": "bad_framing"
+  }
+}

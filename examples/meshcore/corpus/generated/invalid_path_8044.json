@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: PATH tdirect",
+  "tags": [
+    "path",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "e3db53ede5321115",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "PATH",
+    "error": "not_meshcore"
+  }
+}

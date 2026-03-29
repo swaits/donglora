@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ADVERT tflood",
+  "tags": [
+    "advert",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "9019",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "ADVERT",
+    "error": "not_meshcore"
+  }
+}

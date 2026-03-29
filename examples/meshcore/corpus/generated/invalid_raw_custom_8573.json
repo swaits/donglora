@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RAW_CUSTOM flood",
+  "tags": [
+    "raw_custom",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "3dced76812bac7ffbc9f6cde",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RAW_CUSTOM",
+    "error": "bad_framing"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "52b904f897cc8356c56af1",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "error": "not_meshcore"
+  }
+}

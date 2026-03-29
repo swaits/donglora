@@ -1,0 +1,36 @@
+{
+  "description": "Generated valid: PATH direct",
+  "tags": [
+    "path",
+    "direct"
+  ],
+  "packet_hex": "228a911019e87c5bcbbf1ff53d7429122bf197fe62fead94077f3923240931c1d66256b7087c5f92fc4528822797b372e30d2a271d76a8bac45028",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "PATH",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "911019",
+        "e87c5b",
+        "cbbf1f",
+        "f53d74",
+        "29122b",
+        "f197fe",
+        "62fead",
+        "94077f",
+        "392324",
+        "0931c1"
+      ]
+    },
+    "payload": {
+      "dst": "d6",
+      "src": "62",
+      "mac": "56b7",
+      "ciphertext_len": 23
+    }
+  }
+}

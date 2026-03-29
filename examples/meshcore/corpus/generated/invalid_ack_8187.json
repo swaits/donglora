@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ACK flood",
+  "tags": [
+    "ack",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "0d88c32fc2d43e5182aaf10fb6197a1acbc831",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ACK",
+    "error": "bad_framing"
+  }
+}

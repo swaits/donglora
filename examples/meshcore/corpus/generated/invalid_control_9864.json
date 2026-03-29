@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: CONTROL flood",
+  "tags": [
+    "control",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "2dcadae6e95eb30ee5",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "CONTROL",
+    "error": "bad_framing"
+  }
+}

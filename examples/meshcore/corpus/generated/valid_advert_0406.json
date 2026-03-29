@@ -1,0 +1,35 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12851331f08e188b9d1c3ee561b10795e9fa2b51c703c50a38cac4453047d9b4ca31c6555fd9880df956a4065a0cdc57af46b9000026159fc3424c0ad6bd8b1a7cae064e6c67ef9abbbe70e8e7aea55f1c84a2f57890042adee81888e344edbcfbf2735bfad4678f57a463d66439e5ecc5bfbebb3983534874656f757d4e5d5572636f",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "1331f0",
+        "8e188b",
+        "9d1c3e",
+        "e561b1",
+        "0795e9"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "fa2b51c7",
+      "timestamp": 47430,
+      "advert": {
+        "flags": 131,
+        "node_type": "room",
+        "location": null,
+        "name": "SHteou}N]Urco"
+      }
+    }
+  }
+}

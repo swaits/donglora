@@ -1,0 +1,34 @@
+{
+  "description": "Generated valid: GRP_TXT direct",
+  "tags": [
+    "grp_txt",
+    "direct"
+  ],
+  "packet_hex": "1609e4df6453c5a4f6b4b9e229bf4843798c2a50cca95dab519b2875a447b80713cc3a9f7a67",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "GRP_TXT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "e4",
+        "df",
+        "64",
+        "53",
+        "c5",
+        "a4",
+        "f6",
+        "b4",
+        "b9"
+      ]
+    },
+    "payload": {
+      "channel_hash": "e2",
+      "mac": "29bf",
+      "ciphertext_len": 24
+    }
+  }
+}

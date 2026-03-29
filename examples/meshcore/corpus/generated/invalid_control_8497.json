@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: CONTROL tflood",
+  "tags": [
+    "control",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "ac9798",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "CONTROL",
+    "error": "not_meshcore"
+  }
+}

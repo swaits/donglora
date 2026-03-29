@@ -1,0 +1,42 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124904df731b2d2472ca559669fb6b29a6d1352c54fd694cef3fcce931ca45187d5a5154b0ce1b016963cc195e454fa0a32cd208ffffff7fee0847581c17f3aa12f45640dbf3a0591f685afa2476427373f7d0bc1ee26beae77c314e862da5f98ecdaae12bde08ab50b77a74d33c2515bc5f817b16f13cea94f86330ffcd137dfb2a446776633f26332348",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "04df",
+        "731b",
+        "2d24",
+        "72ca",
+        "5596",
+        "69fb",
+        "6b29",
+        "a6d1",
+        "352c"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "54fd694c",
+      "timestamp": 2147483647,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -13.6059,
+          "lon": -75.689
+        },
+        "name": "*Dgvc?&3#H"
+      }
+    }
+  }
+}

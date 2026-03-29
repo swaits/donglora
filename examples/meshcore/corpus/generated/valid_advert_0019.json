@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1145b4ab6956bef77d3c9154e3e2565a09fd0e11cd9224468098f8b8f311ee317adec0cf38161082533bd6a8af130000c8b302e21b2fc7dd05d0fb176a1b7a03c822496c10044df79fff4bfdb44a7a3e88bc31916d8f07f7b0105ff00ea53bd15482c20682703bb3623c43bce46e2e69920eb6a2faaa4846f537772f326d",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "b4ab",
+        "6956",
+        "bef7",
+        "7d3c",
+        "9154"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "e3e2565a",
+      "timestamp": 5039,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -89.9999,
+          "lon": -179.9433
+        },
+        "name": "7w/2m"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12006aaba202f134faa32b6975cd690b394c651e9ed8a6a6e57d1e2ede3414425365f7bca8b5352ce1c2bc7ce38588434de56f63bf3d65cf865c90b03e61fa88f2b56304bee495ad67fd8f790f9babdda4c14257b7e2508afa5c151f44188fb255b0e500f2359416dfa2fafc6b45f5562d73695b52544a",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": []
+    },
+    "payload": {
+      "pubkey_prefix": "6aaba202",
+      "timestamp": 3047734519,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -89.9894,
+          "lon": -179.9997
+        },
+        "name": "V-si[RTJ"
+      }
+    }
+  }
+}

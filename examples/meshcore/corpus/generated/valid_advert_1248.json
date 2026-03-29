@@ -1,0 +1,42 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1189d44327f171caab375e9fb2dfa1b0a57204dd329a102790a35916f620e1c6b641f0d293b264c6bf82f0fca63b1d4cc7a7f3c5bc3a785b61d360d993258a00001eb51c61f12644840253fcb68008d467fd1918b27164a0939e5238f285eeddfc3b3720e4018c9e6d112bd4290c98dee6193fcbc2e0045b84a6f9aa454adecd46924e7b43fcd46b45f53367",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "d44327",
+        "f171ca",
+        "ab375e",
+        "9fb2df",
+        "a1b0a5",
+        "7204dd",
+        "329a10",
+        "2790a3",
+        "5916f6"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "20e1c6b6",
+      "timestamp": 35365,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -62.6864,
+          "lon": -179.9998
+        },
+        "name": "3g"
+      }
+    }
+  }
+}

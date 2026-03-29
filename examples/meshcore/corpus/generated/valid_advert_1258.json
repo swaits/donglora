@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124a75ba81974b780de18864948681e4fcee2918aced58cb7511c55f91a147c8d39ea866b7b0d69e87f05538ac84e37511ae4ebe9f47b0a30000ac8404b9c579aaa42feac2db8691b70cf31f1ab153779295ef7a26b2c8ed45cca5a0a2e224e6cf1e04b670ff8385313dd7b023f2d1caad81abfdbb9477113700835a326359282935",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "75ba",
+        "8197",
+        "4b78",
+        "0de1",
+        "8864",
+        "9486",
+        "81e4",
+        "fcee",
+        "2918",
+        "aced"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "58cb7511",
+      "timestamp": 41904,
+      "advert": {
+        "flags": 131,
+        "node_type": "room",
+        "location": null,
+        "name": "Z2cY()5"
+      }
+    }
+  }
+}

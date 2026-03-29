@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_DATA direct",
+  "tags": [
+    "grp_data",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "1ac7a9",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "GRP_DATA",
+    "error": "bad_framing"
+  }
+}

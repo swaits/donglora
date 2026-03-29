@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE tdirect",
+  "tags": [
+    "response",
+    "tdirect",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "07b423db66b0fb86",
+  "valid": false,
+  "expected": {
+    "route_type": "tdirect",
+    "payload_type": "RESPONSE",
+    "error": "not_meshcore"
+  }
+}

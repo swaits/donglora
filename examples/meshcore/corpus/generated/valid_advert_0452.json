@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12853c4665b56a5adb402c5d7898ce23904cad9dde856d84eddf38f0871d62785d6004910a6a7e4d7b473fb510c6e244087d210000b92c21ea93d8bb290419f921fb374bbf1b08a5a57d88db3c3133e5ed9da52f70dc008f0bbc37f9482c2359c5169c96cbd6e0ba5f6c83dbde537f031bd888956e94479ba3fa597301fd50314d32285a48437d32",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "3c4665",
+        "b56a5a",
+        "db402c",
+        "5d7898",
+        "ce2390"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "4cad9dde",
+      "timestamp": 8573,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -89.9412,
+          "lon": -50.2366
+        },
+        "name": "P1M2(ZHC}2"
+      }
+    }
+  }
+}

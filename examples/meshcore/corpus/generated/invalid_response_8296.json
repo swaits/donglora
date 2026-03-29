@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RESPONSE flood",
+  "tags": [
+    "response",
+    "flood",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "05fd0ffa54b4f2",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RESPONSE",
+    "error": "bad_framing"
+  }
+}

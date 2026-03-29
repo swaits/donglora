@@ -1,0 +1,35 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1185fca4083d7931955a39ddb2cf30bd75102c5ce38c1a73a6f9d808bb7b8f5be5650d94e2b128b350b5e17866091a09976a000000fe438fc03b6774ad5233e76d8e8c25b681acc3417f47a7605623a9ca2cab1a6ca6430276546b9517f2fd1cdbc89218f0afeefd990228f29af5900caa2c2042ab04",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "fca408",
+        "3d7931",
+        "955a39",
+        "ddb2cf",
+        "30bd75"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "102c5ce3",
+      "timestamp": 106,
+      "advert": {
+        "flags": 4,
+        "node_type": "sensor",
+        "location": null,
+        "name": null
+      }
+    }
+  }
+}

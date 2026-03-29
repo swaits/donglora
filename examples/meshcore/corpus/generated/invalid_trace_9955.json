@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TRACE flood",
+  "tags": [
+    "trace",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "65b18bb811daa342f0012329ed5f9d5cabf7fe7b131d",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "TRACE",
+    "error": "not_meshcore"
+  }
+}

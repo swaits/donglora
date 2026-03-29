@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: CONTROL direct",
+  "tags": [
+    "control",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "2ee561cd5f0b7c",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "CONTROL",
+    "error": "bad_framing"
+  }
+}

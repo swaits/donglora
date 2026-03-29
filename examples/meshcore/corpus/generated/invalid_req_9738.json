@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: REQ flood",
+  "tags": [
+    "req",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "813e0e2c094ef2ed85f2fd1b",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "REQ",
+    "error": "not_meshcore"
+  }
+}

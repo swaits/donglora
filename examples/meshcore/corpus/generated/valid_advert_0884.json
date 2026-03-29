@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "120aa0a3b3025b4e585a58fec2f42994c5ef3982fbe0cb8ed1e58d58396f8732937f01371551d5ab6acfc8c50000000019351093b6b3070fd7163e8f4939c33e3b9ff9d7fd756c3c8d80239e33bb7c3e73dfe068d810a73ded2a406f5fd20b9a1778c1fb4c521e29fed588a3a65735bd81794863222e28214a797866232f2e3335",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "a0",
+        "a3",
+        "b3",
+        "02",
+        "5b",
+        "4e",
+        "58",
+        "5a",
+        "58",
+        "fe"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "c2f42994",
+      "timestamp": 0,
+      "advert": {
+        "flags": 129,
+        "node_type": "chat",
+        "location": null,
+        "name": "yHc\".(!Jyxf#/.35"
+      }
+    }
+  }
+}

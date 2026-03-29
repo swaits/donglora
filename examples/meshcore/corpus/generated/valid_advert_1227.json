@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1186a70c5edd697edfba7b3e1430865731d693454f3c6474d4858951e48e0bf5fcc394fb34783e59db99b2ec8c079dd7aa354984d4000000bdc0f9a81acbf91daacf28e2d646dafa0164a5b9cbc5de8deda6c9be661fc4d92c370d383e237e458db486eba7b8f1179fc7a5cdee30fa29da3a24ffec5eafcc9378aa57048d6b45f5305321385921314a33777b5120584e23",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "a70c5e",
+        "dd697e",
+        "dfba7b",
+        "3e1430",
+        "865731",
+        "d69345"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "4f3c6474",
+      "timestamp": 212,
+      "advert": {
+        "flags": 147,
+        "node_type": "room",
+        "location": {
+          "lat": 72.8541,
+          "lon": -179.9999
+        },
+        "name": "0S!8Y!1J3w{Q XN#"
+      }
+    }
+  }
+}

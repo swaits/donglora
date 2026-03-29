@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12852331ccf4e495ed976b9f06b6274cdaaa1ad6c2a4552693f85b77e9ca428eec397ec9a8ae594861ef80ff75a012ac9bee000000f0c0d1d7d968e3a41da4f93bda267a3ab969a3ac6ddd517803062a0d22b1e3c11e063e6ff6c8e881c73a2c2a7af85c7aecb920621c40dd87ab72e444b61fc8879280b5a2fa80c645f52e55636b",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "2331cc",
+        "f4e495",
+        "ed976b",
+        "9f06b6",
+        "274cda"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "aa1ad6c2",
+      "timestamp": 238,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -90.0,
+          "lon": -179.9766
+        },
+        "name": ".Uck"
+      }
+    }
+  }
+}

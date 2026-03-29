@@ -1,0 +1,39 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12899070359365b97a8422d14637a8a2e63618bae61d3b722c132cf6273a0766f74845fe89fdf7e81fd0c899112eb2c5c0303ffdb84559da22400e37323700000077dd1562b730cdb1fb1e06424a3a206f27a97615fdceac6f73f429fbc0abd20ba01676db8289b03938b4086d0857ede2c921f070f867bc66b49de5fee5d507b484757a78",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "907035",
+        "9365b9",
+        "7a8422",
+        "d14637",
+        "a8a2e6",
+        "3618ba",
+        "e61d3b",
+        "722c13",
+        "2cf627"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "3a0766f7",
+      "timestamp": 55,
+      "advert": {
+        "flags": 132,
+        "node_type": "sensor",
+        "location": null,
+        "name": "uzx"
+      }
+    }
+  }
+}

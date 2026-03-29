@@ -1,0 +1,42 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "12092783942d03e7a4f4cc63df8aa12b4ea3510955e0def7638378b0608f5c54223b1d5abe055fba8e4bd596ef000099853609200768d817c03d7373e7d61ec68dcb9f24cfc205bdda3014d01dc71d22b3d3cdf6da5192f2c2a5e496449e196bdd2fd3579c30fa68c0dd7a7d2f9fee91dd36a3fa80c945f54f6e332633714c74",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "27",
+        "83",
+        "94",
+        "2d",
+        "03",
+        "e7",
+        "a4",
+        "f4",
+        "cc"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "63df8aa1",
+      "timestamp": 61334,
+      "advert": {
+        "flags": 145,
+        "node_type": "chat",
+        "location": {
+          "lat": -89.9669,
+          "lon": -179.9758
+        },
+        "name": "On3&3qLt"
+      }
+    }
+  }
+}

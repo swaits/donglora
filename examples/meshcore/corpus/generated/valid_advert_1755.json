@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "1245798025b3e697801f8ac30b6c34ccfe22f2356d46a5cdd7e1c5e4f0ce32b769537032dad7685ad37c2d3916c00000102c9c9ab436c6ca8faf436555509933ae3ed4a49d48bc8aeb9ca60ee0433bb8aa804e3a95055b51bf33d97c2c690bf70af0021b15a758b98eb7f38b2ff029b79415b6a2fa006b45f56626567836",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "7980",
+        "25b3",
+        "e697",
+        "801f",
+        "8ac3"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "0b6c34cc",
+      "timestamp": 49174,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -89.9999,
+          "lon": -180.0
+        },
+        "name": "f&Vx6"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "120a3c75590895cc7046e45691d19c416e2e0edab45beabb92de22448e2e0b7b6e0e9716677219d30f5cca4e0c1d0000048ba5c1f9e33658d2fa222e78127823f557eca6e11d97e0530b62a1cec009e5c713150c39bf290807dcb8cc464a8b31cd43cc43df76bd2b30a7e83a8e059ac7938dd4a2fae2f73a01394f464722",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "3c",
+        "75",
+        "59",
+        "08",
+        "95",
+        "cc",
+        "70",
+        "46",
+        "e4",
+        "56"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "91d19c41",
+      "timestamp": 7436,
+      "advert": {
+        "flags": 147,
+        "node_type": "room",
+        "location": {
+          "lat": -89.9921,
+          "lon": 20.6418
+        },
+        "name": "9OFG\""
+      }
+    }
+  }
+}

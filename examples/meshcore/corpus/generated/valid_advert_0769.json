@@ -1,0 +1,40 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "114af5de2f44efb714e62ded952a580f25858e1935c8f10cafe9a1318c593b937fd785e587f4d8f2b9bd95808dfb5954df8a39f2f730a8610000e1ac5c6d394534601d357aed549b5f04c5a45a25e0c353986f9ed0b4004d991267467620cad086f5d3a9b4450ab1a9e858ef4659ab23417771a7854b0a065f318243276944",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "f5de",
+        "2f44",
+        "efb7",
+        "14e6",
+        "2ded",
+        "952a",
+        "580f",
+        "2585",
+        "8e19",
+        "35c8"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "f10cafe9",
+      "timestamp": 25000,
+      "advert": {
+        "flags": 130,
+        "node_type": "repeater",
+        "location": null,
+        "name": "C'iD"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: REQ direct",
+  "tags": [
+    "req",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "02efd1fc3960452e9d03220934c6",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "REQ",
+    "error": "bad_framing"
+  }
+}

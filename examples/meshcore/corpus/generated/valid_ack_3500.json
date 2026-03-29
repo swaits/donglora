@@ -1,0 +1,33 @@
+{
+  "description": "Generated valid: ACK direct",
+  "tags": [
+    "ack",
+    "direct"
+  ],
+  "packet_hex": "0e0ad0ae8fa942b17bb6e31fe6af0000",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ACK",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "d0",
+        "ae",
+        "8f",
+        "a9",
+        "42",
+        "b1",
+        "7b",
+        "b6",
+        "e3",
+        "1f"
+      ]
+    },
+    "payload": {
+      "ack_crc": 45030
+    }
+  }
+}

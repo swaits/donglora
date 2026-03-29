@@ -1,0 +1,41 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "11087a7e610c8b4f720f56a9125f18e82545c5b65feaf03b8f8b999413c9819ebb034cade93ee8b82e563602000079af028e9e578157ab87c4637916caeb7fabd0f65df29561dcfbe2b5074f06a4af477de523bec3857105f32ee07f4b03e09c72fd18e4811dc81063dde505d600946551da02229dd5024b72506b5d48517d55",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "7a",
+        "7e",
+        "61",
+        "0c",
+        "8b",
+        "4f",
+        "72",
+        "0f"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "56a9125f",
+      "timestamp": 566,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": 47.8621,
+          "lon": 47.5538
+        },
+        "name": "KrPk]HQ}U"
+      }
+    }
+  }
+}

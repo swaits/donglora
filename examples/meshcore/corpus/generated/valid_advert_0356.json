@@ -1,0 +1,37 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "1284ad09e2f7922743c1859e5f5c69527fecf6993d49f4772b4876cc44dfafc45cc8116bd134e4bf961ae4f2776a170000006afc9b6bca61802139516d43b08cb011307fab39193e39e57ffae2debe308a61902248d68524c2cf7915c610b4b24840c71559c810a585282a4176411ece2c4892ad1baefd568445f53253744f4e4e623a737b432f58",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "ad09e2",
+        "f79227",
+        "43c185",
+        "9e5f5c"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "69527fec",
+      "timestamp": 23,
+      "advert": {
+        "flags": 146,
+        "node_type": "repeater",
+        "location": {
+          "lat": -38.9213,
+          "lon": -179.9935
+        },
+        "name": "2StONNb:s{C/X"
+      }
+    }
+  }
+}

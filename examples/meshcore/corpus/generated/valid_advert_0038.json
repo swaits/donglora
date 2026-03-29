@@ -1,0 +1,37 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "124422424201e48e19e327a0bd2d3ee643b92e17e5b7091e23e0ce799e52a1ec0b2150e2e844713470bb60b20000b8c1e9d93e3a0a535e4edfb4e2db7620ec12ec6afbc449431932056ae98c6b2e301aaa79622cad1375bab416448cba2116fb8cc1f5296157a2365aef4c30c4e4910d32a3fa3bb24ef7413239206b7438582d5a72",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "2242",
+        "4201",
+        "e48e",
+        "19e3"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "27a0bd2d",
+      "timestamp": 45664,
+      "advert": {
+        "flags": 145,
+        "node_type": "chat",
+        "location": {
+          "lat": -89.9681,
+          "lon": -145.8375
+        },
+        "name": "A29 kt8X-Zr"
+      }
+    }
+  }
+}

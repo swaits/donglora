@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "1288f93f51a9c87daa9c02c849813edd0f588f5adc259b68ddf08c5126e19cb62d1a7b31977ffa51f4960431626a42b787e2a6d078853ac9d2870d950000228df60ca1e6344e7c5959eba184eca40f12b5cefc879aece9a5e8f83335bf9a666fadc54e30e1c15969f3a3c13ce5918117a17c52fde27de4576517bfc9f5d884275f5479614e",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "f93f51",
+        "a9c87d",
+        "aa9c02",
+        "c84981",
+        "3edd0f",
+        "588f5a",
+        "dc259b",
+        "68ddf0"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "8c5126e1",
+      "timestamp": 38157,
+      "advert": {
+        "flags": 132,
+        "node_type": "sensor",
+        "location": null,
+        "name": "'_TyaN"
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "description": "Generated valid: PATH direct",
+  "tags": [
+    "path",
+    "direct"
+  ],
+  "packet_hex": "220345b1bbe09a0c9ef74fe47d039642ba501098962154ad37f15f97a17c145710",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "PATH",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "45",
+        "b1",
+        "bb"
+      ]
+    },
+    "payload": {
+      "dst": "e0",
+      "src": "9a",
+      "mac": "0c9e",
+      "ciphertext_len": 24
+    }
+  }
+}

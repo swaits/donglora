@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_DATA direct",
+  "tags": [
+    "grp_data",
+    "direct",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "1aea39f784de5b02",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "GRP_DATA",
+    "error": "not_meshcore"
+  }
+}

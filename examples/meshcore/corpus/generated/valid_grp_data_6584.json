@@ -1,0 +1,31 @@
+{
+  "description": "Generated valid: GRP_DATA flood",
+  "tags": [
+    "grp_data",
+    "flood"
+  ],
+  "packet_hex": "194620a84028e42e83399bedfbbcf4c34f60ca286c7aff4e60969fd50bdd52496a2e7a06f3142015b54a71ea979c10823023d11cab8ab7dbcc01260a",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "GRP_DATA",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "20a8",
+        "4028",
+        "e42e",
+        "8339",
+        "9bed",
+        "fbbc"
+      ]
+    },
+    "payload": {
+      "channel_hash": "f4",
+      "mac": "c34f",
+      "ciphertext_len": 43
+    }
+  }
+}

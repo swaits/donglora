@@ -1,0 +1,36 @@
+{
+  "description": "Generated valid: REQ flood",
+  "tags": [
+    "req",
+    "flood"
+  ],
+  "packet_hex": "018a7c448744b90da68dd7dc66da3882a6713ea10925ec5bff550d4fce184178ca3947a6afd5",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "REQ",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "7c4487",
+        "44b90d",
+        "a68dd7",
+        "dc66da",
+        "3882a6",
+        "713ea1",
+        "0925ec",
+        "5bff55",
+        "0d4fce",
+        "184178"
+      ]
+    },
+    "payload": {
+      "dst": "ca",
+      "src": "39",
+      "mac": "47a6",
+      "ciphertext_len": 2
+    }
+  }
+}

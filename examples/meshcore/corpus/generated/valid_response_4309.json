@@ -1,0 +1,27 @@
+{
+  "description": "Generated valid: RESPONSE flood",
+  "tags": [
+    "response",
+    "flood"
+  ],
+  "packet_hex": "0501ee4043582d43cee7123a1db24d68f89b228279b24b0a66ff27eb86ec82281495cabde3fcdf64d6c311",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RESPONSE",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "ee"
+      ]
+    },
+    "payload": {
+      "dst": "40",
+      "src": "43",
+      "mac": "582d",
+      "ciphertext_len": 36
+    }
+  }
+}

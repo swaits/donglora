@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ACK tflood",
+  "tags": [
+    "ack",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "0c2c459e4000b29ab1f27a0efd5738",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "ACK",
+    "error": "not_meshcore"
+  }
+}

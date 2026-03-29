@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RAW_CUSTOM tflood",
+  "tags": [
+    "raw_custom",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "fcac8d143b0e2e132a96",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "RAW_CUSTOM",
+    "error": "not_meshcore"
+  }
+}

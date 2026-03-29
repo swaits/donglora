@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: PATH tflood",
+  "tags": [
+    "path",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "e09be4",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "PATH",
+    "error": "not_meshcore"
+  }
+}

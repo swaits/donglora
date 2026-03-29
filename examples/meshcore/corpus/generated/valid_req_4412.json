@@ -1,0 +1,30 @@
+{
+  "description": "Generated valid: REQ direct",
+  "tags": [
+    "req",
+    "direct"
+  ],
+  "packet_hex": "02041092843ab120a5f46fd772997ecc192de7f5468a6c4befedb8e4bacf18302cba333c1326bf8d",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "REQ",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 1,
+      "hops": [
+        "10",
+        "92",
+        "84",
+        "3a"
+      ]
+    },
+    "payload": {
+      "dst": "b1",
+      "src": "20",
+      "mac": "a5f4",
+      "ciphertext_len": 30
+    }
+  }
+}

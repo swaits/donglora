@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: TRACE direct",
+  "tags": [
+    "trace",
+    "direct",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "26925336c7cc706c",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "TRACE",
+    "error": "not_meshcore"
+  }
+}

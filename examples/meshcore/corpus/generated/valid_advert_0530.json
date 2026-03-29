@@ -1,0 +1,43 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "114a4579109cc68067db3c94fe3908d05e667860faa4d58efc78343815c1ed7514d1ab16d98a55926be339dc2e7d0b7b959f549bff74e8060000b6485856c37c0b3d341dd0399f3421100bf948df596c69b8fc9f24eda4ab92d73cb15c949fa6cb13245e2a7f2a39cc1bf5a386a1c12e038734ba3065b4810849946e33a3faca9a45f557375f4d4a49",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "4579",
+        "109c",
+        "c680",
+        "67db",
+        "3c94",
+        "fe39",
+        "08d0",
+        "5e66",
+        "7860",
+        "faa4"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "d58efc78",
+      "timestamp": 1768,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -89.9678,
+          "lon": -179.9878
+        },
+        "name": "W7_MJI"
+      }
+    }
+  }
+}

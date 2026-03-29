@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: ANON_REQ tflood",
+  "tags": [
+    "anon_req",
+    "tflood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "dcd06205c01ffa8ff0fdd4f9f4",
+  "valid": false,
+  "expected": {
+    "route_type": "tflood",
+    "payload_type": "ANON_REQ",
+    "error": "not_meshcore"
+  }
+}

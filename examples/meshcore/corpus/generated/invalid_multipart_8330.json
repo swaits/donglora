@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: MULTIPART direct",
+  "tags": [
+    "multipart",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "2ac2b44c780c0f4934a39652d4f2325048ee86beb8e0",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "MULTIPART",
+    "error": "bad_framing"
+  }
+}

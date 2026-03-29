@@ -1,0 +1,38 @@
+{
+  "description": "Generated valid: ADVERT flood",
+  "tags": [
+    "advert",
+    "flood"
+  ],
+  "packet_hex": "1185399c502a861a8e6d25232e67e8cd53d1d105edeae9b0b32e397e5944533c1981e4e9c0ad9049a6e104232615327210088b78316923505f7af24ef80e7b90963e04f83145273524d4ae1be0a716b34e1badbd5b433be94c6ffa7d0047d003b87c8e4831dc932b5388a2c4e8fe1eca8a51aa0866943be064ff20e28804414678",
+  "valid": true,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 3,
+      "hops": [
+        "399c50",
+        "2a861a",
+        "8e6d25",
+        "232e67",
+        "e8cd53"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "d1d105ed",
+      "timestamp": 829983496,
+      "advert": {
+        "flags": 148,
+        "node_type": "sensor",
+        "location": {
+          "lat": -10.1662,
+          "lon": 76.0796
+        },
+        "name": "AFx"
+      }
+    }
+  }
+}

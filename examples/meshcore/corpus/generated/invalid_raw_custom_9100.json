@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RAW_CUSTOM direct",
+  "tags": [
+    "raw_custom",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "3ee5c2e2b4c1d494530d4ef312930f",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "RAW_CUSTOM",
+    "error": "bad_framing"
+  }
+}

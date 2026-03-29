@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: RAW_CUSTOM flood",
+  "tags": [
+    "raw_custom",
+    "flood",
+    "invalid",
+    "not_meshcore"
+  ],
+  "packet_hex": "3d0ba1c585",
+  "valid": false,
+  "expected": {
+    "route_type": "flood",
+    "payload_type": "RAW_CUSTOM",
+    "error": "not_meshcore"
+  }
+}

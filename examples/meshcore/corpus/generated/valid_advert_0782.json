@@ -1,0 +1,36 @@
+{
+  "description": "Generated valid: ADVERT direct",
+  "tags": [
+    "advert",
+    "direct"
+  ],
+  "packet_hex": "1246e28fe92f89c5976b46d1224596bae382adefb77009016b877c08ddb8706b23d42b96d61157a4334b4ef36d9042000000f7c9867872012db5e03175a0123837098e3999bd12841dc749f3559307dbb4c5b98966875e5a214c74556a5d7de338ec705ba3c5e1584b6d581b3f2d5e34ad5b84666e7a58",
+  "valid": true,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "ADVERT",
+    "payload_ver": 0,
+    "transport_codes": null,
+    "path": {
+      "hash_size": 2,
+      "hops": [
+        "e28f",
+        "e92f",
+        "89c5",
+        "976b",
+        "46d1",
+        "2245"
+      ]
+    },
+    "payload": {
+      "pubkey_prefix": "96bae382",
+      "timestamp": 66,
+      "advert": {
+        "flags": 132,
+        "node_type": "sensor",
+        "location": null,
+        "name": "fnzX"
+      }
+    }
+  }
+}

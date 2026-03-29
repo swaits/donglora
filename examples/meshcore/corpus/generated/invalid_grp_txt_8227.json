@@ -1,0 +1,16 @@
+{
+  "description": "Generated invalid: GRP_TXT direct",
+  "tags": [
+    "grp_txt",
+    "direct",
+    "invalid",
+    "bad_framing"
+  ],
+  "packet_hex": "16e96f87ab86f1f9ba5c397390a3454625",
+  "valid": false,
+  "expected": {
+    "route_type": "direct",
+    "payload_type": "GRP_TXT",
+    "error": "bad_framing"
+  }
+}
