@@ -1,78 +1,80 @@
-# DongLoRa USB Protocol Specification
+# DongLoRa USB Protocol
 
-DongLoRa communicates over USB CDC-ACM (virtual serial port) using
-binary messages. No baud rate configuration is needed — USB handles
-the transport.
+DongLoRa communicates over USB CDC-ACM (virtual serial port).
+No baud rate configuration needed.
 
 **USB identifiers:** VID `1209`, PID `5741`
 
 ## Framing
 
-Each message is serialized with [postcard](https://postcard.jamesmunns.com/)
-and framed with [COBS](https://en.wikipedia.org/wiki/Consistent_Overhead_Byte_Stuffing):
+Each message is [COBS](https://en.wikipedia.org/wiki/Consistent_Overhead_Byte_Stuffing)-encoded
+and terminated with a `0x00` sentinel byte:
 
 ```
-[COBS-encoded postcard bytes] [0x00 sentinel]
+[COBS-encoded bytes] [0x00]
 ```
 
-COBS guarantees that `0x00` never appears in the encoded data, so the
-sentinel byte unambiguously marks the end of each frame. Maximum frame
-size is 512 bytes. USB packets are chunked at 64 bytes.
+COBS guarantees `0x00` never appears in the encoded data, so the
+sentinel unambiguously marks frame boundaries. USB packets are
+chunked at 64 bytes.
 
-## Serialization (postcard)
+## Encoding
 
-Postcard is a compact binary format. The subset used by DongLoRa:
+All integers are **fixed-size little-endian**. No variable-length
+encoding. Every field has a known size at a known offset.
 
-| Type | Encoding |
-|------|----------|
-| `u8` | Raw byte |
-| `i8` | Raw byte (two's complement) |
-| `u16`, `u32` | Varint (LEB128: 7 data bits per byte, MSB = continuation) |
-| `i16`, `i32` | Zigzag then varint (`(n << 1) ^ (n >> bits-1)`) |
-| Enum variant | Varint of 0-based variant index, then variant fields |
-| `Option<T>` | `0x00` = None, `0x01` + T = Some |
-| `Vec<u8, N>` | Varint length, then raw bytes |
-| Struct | Fields in declaration order, no delimiters |
+| Type | Size | Encoding |
+|------|------|----------|
+| `u8` | 1 | Raw byte |
+| `i8` | 1 | Raw byte (two's complement) |
+| `u16` | 2 | Little-endian |
+| `i16` | 2 | Little-endian (two's complement) |
+| `u32` | 4 | Little-endian |
+
+## RadioConfig (10 bytes)
+
+| Offset | Size | Field | Type | Valid range |
+|--------|------|-------|------|-------------|
+| 0 | 4 | `freq_hz` | u32 LE | 150,000,000 – 960,000,000 |
+| 4 | 1 | `bw` | u8 | 0–9 (see bandwidth table) |
+| 5 | 1 | `sf` | u8 | 5–12 |
+| 6 | 1 | `cr` | u8 | 5–8 (coding rate denominator) |
+| 7 | 2 | `sync_word` | u16 LE | any |
+| 9 | 1 | `tx_power_dbm` | i8 | board-dependent, or `-128` for max |
+
+Set `tx_power_dbm` to `-128` (0x80) to use the board's maximum
+TX power. The firmware resolves this to the actual hardware max.
 
 ## Commands (Host → Firmware)
 
-| Index | Command | Fields | Description |
-|-------|---------|--------|-------------|
-| 0 | `Ping` | — | Health check. Returns `Pong`. |
-| 1 | `GetConfig` | — | Request current radio config. Returns `Config` or `Error(NotConfigured)`. |
-| 2 | `SetConfig` | `RadioConfig` | Set radio parameters. Validated against hardware limits. Returns `Ok` or `Error(InvalidConfig)`. |
-| 3 | `StartRx` | — | Enter continuous receive mode. Returns `Ok` or `Error`. |
-| 4 | `StopRx` | — | Return to idle. Returns `Ok`. |
-| 5 | `Transmit` | `Option<RadioConfig>`, `Vec<u8, 256>` | Transmit a packet. Optional per-packet config override. Returns `TxDone` or `Error`. Automatically resumes RX if it was active. |
-| 6 | `DisplayOn` | — | Turn on the OLED display. |
-| 7 | `DisplayOff` | — | Turn off the OLED display. |
+Each command is a tag byte followed by fixed-size fields.
+
+| Tag | Command | Payload |
+|-----|---------|---------|
+| 0 | Ping | — |
+| 1 | GetConfig | — |
+| 2 | SetConfig | RadioConfig (10 bytes) |
+| 3 | StartRx | — |
+| 4 | StopRx | — |
+| 5 | Transmit | has_config (1) + [RadioConfig if 1] + len (u16 LE) + payload |
+| 6 | DisplayOn | — |
+| 7 | DisplayOff | — |
 
 ## Responses (Firmware → Host)
 
-| Index | Response | Fields | Description |
-|-------|----------|--------|-------------|
-| 0 | `Pong` | — | Reply to `Ping`. |
-| 1 | `Config` | `RadioConfig` | Current radio configuration. |
-| 2 | `RxPacket` | `rssi: i16`, `snr: i16`, `payload: Vec<u8, 256>` | Received packet with signal quality. |
-| 3 | `TxDone` | — | Transmission complete. |
-| 4 | `Ok` | — | Command succeeded (SetConfig, StartRx, StopRx). |
-| 5 | `Error` | `ErrorCode` | Command failed. |
-
-## RadioConfig
-
-| Field | Type | Wire encoding | Valid range | Description |
-|-------|------|---------------|-------------|-------------|
-| `freq_hz` | `u32` | varint | 150,000,000 – 960,000,000 | Frequency in Hz |
-| `bw` | `Bandwidth` | varint (0–9) | see table | Signal bandwidth |
-| `sf` | `u8` | raw byte | 5 – 12 | Spreading factor |
-| `cr` | `u8` | raw byte | 5 – 8 | Coding rate denominator (5 = CR 4/5) |
-| `sync_word` | `u16` | varint | any | LoRa sync word (e.g. `0x3444`) |
-| `tx_power_dbm` | `i8` | raw signed byte | board-dependent | TX power in dBm. `-128` = board's max power. |
+| Tag | Response | Payload |
+|-----|----------|---------|
+| 0 | Pong | — |
+| 1 | Config | RadioConfig (10 bytes) |
+| 2 | RxPacket | rssi (i16 LE) + snr (i16 LE) + len (u16 LE) + payload |
+| 3 | TxDone | — |
+| 4 | Ok | — |
+| 5 | Error | code (u8) |
 
 ## Bandwidth
 
-| Wire value | Bandwidth |
-|------------|-----------|
+| Value | Bandwidth |
+|-------|-----------|
 | 0 | 7.8 kHz |
 | 1 | 10.4 kHz |
 | 2 | 15.6 kHz |
@@ -84,66 +86,51 @@ Postcard is a compact binary format. The subset used by DongLoRa:
 | 8 | 250 kHz |
 | 9 | 500 kHz |
 
-## ErrorCode
+## Error Codes
 
-| Wire value | Error | Meaning |
-|------------|-------|---------|
+| Value | Error | Meaning |
+|-------|-------|---------|
 | 0 | InvalidConfig | Radio config validation failed |
-| 1 | RadioBusy | Radio is busy (e.g. RX restart failed) |
+| 1 | RadioBusy | Radio busy (e.g. RX restart failed) |
 | 2 | TxTimeout | Transmission timed out |
 | 3 | CrcError | CRC error on received packet |
-| 4 | NotConfigured | Command requires SetConfig first |
-| 5 | NoDisplay | Display command sent but no display attached |
+| 4 | NotConfigured | SetConfig required first |
+| 5 | NoDisplay | No display attached |
 
 ## Worked Example
 
-Configure the radio for 915 MHz, 125 kHz BW, SF7, CR 4/5, sync word `0x3444`,
-14 dBm TX power.
+Configure for 915 MHz, 125 kHz BW, SF7, CR 4/5, max TX power:
 
-### 1. Build the RadioConfig
+### 1. Build the bytes
 
-| Field | Value | Wire bytes | Encoding |
-|-------|-------|-----------|----------|
-| `freq_hz` | 915,000,000 | `C0 95 A7 B4 03` | varint |
-| `bw` | 7 (125 kHz) | `07` | varint (enum index) |
-| `sf` | 7 | `07` | raw byte |
-| `cr` | 5 (CR 4/5) | `05` | raw byte |
-| `sync_word` | 0x3444 | `C4 68` | varint |
-| `tx_power_dbm` | 14 | `0E` | raw signed byte |
-
-Or use `-128` (`0x80`) for `tx_power_dbm` to request the board's max power.
-
-### 2. Build the SetConfig command
-
-Prepend the variant index for `SetConfig` (index 2):
-
-```
-02 C0 95 A7 B4 03 07 07 05 C4 68 0E
+```python
+import struct
+config = struct.pack("<IBBBHB",
+    915_000_000,  # freq_hz
+    7,            # bw (125 kHz)
+    7,            # sf
+    5,            # cr (4/5)
+    0x1424,       # sync_word
+    0x80,         # tx_power_dbm (-128 = max)
+)
+command = b"\x02" + config  # tag 2 = SetConfig
 ```
 
-### 3. COBS-encode and send
+Raw bytes: `02 00 93 87 36 07 07 05 24 14 80`
 
-COBS encoding wraps the bytes so `0x00` never appears in the data,
-then appends a `0x00` sentinel:
+### 2. COBS-encode and send
 
-```
-[COBS-encoded bytes] 00
-```
-
-Write the resulting bytes to the USB serial port. Read back a COBS
-frame, decode it, and the first byte is the response variant index
-(4 = `Ok`).
+COBS-encode the bytes, append `0x00`, write to USB serial port.
+Read back the response, COBS-decode it. First byte `0x04` = Ok.
 
 ## Host Implementation Checklist
 
-1. Open the USB serial port (find by VID:PID `1209:5741`)
-2. Implement varint encoding/decoding (for `u16`/`u32` and enum variants)
-3. Note: `u8` and `i8` are raw bytes, NOT varint/zigzag
-4. Implement COBS encode/decode (use a library — available in every language)
-5. Build `SetConfig` with your desired radio parameters (use `-128` for max TX power)
-6. Send it, read back `Ok`
-7. Send `StartRx`, read back `Ok`
-8. Loop: read frames, decode `RxPacket` responses
-9. To transmit: send `Transmit` with payload, read back `TxDone`
+1. Open USB serial port (find by VID:PID `1209:5741`)
+2. Implement COBS encode/decode (libraries exist for every language)
+3. Pack commands with `struct.pack` or equivalent — all fields are fixed-size LE
+4. Send `SetConfig`, read back `Ok`
+5. Send `StartRx`, read back `Ok`
+6. Loop: read frames, decode `RxPacket` (rssi, snr, payload at known offsets)
+7. To transmit: send `Transmit`, read back `TxDone`
 
 See `examples/` for working Python implementations.
