@@ -146,7 +146,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
             }
             Either3::Second(response) => {
                 // Serialize response to fixed-size LE bytes, then COBS encode
-                let raw_len = response.to_bytes(&mut write_buf);
+                let raw_len = response.write_to(&mut write_buf);
                 let encoded_len = cobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf);
                 // Append 0x00 sentinel
                 if encoded_len < cobs_encode_buf.len() {

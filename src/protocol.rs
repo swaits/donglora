@@ -98,7 +98,7 @@ impl RadioConfig {
     }
 
     /// Serialize to fixed-size LE bytes. Returns number of bytes written (always 10).
-    pub fn to_bytes(&self, buf: &mut [u8]) -> usize {
+    pub fn write_to(self, buf: &mut [u8]) -> usize {
         buf[0..4].copy_from_slice(&self.freq_hz.to_le_bytes());
         buf[4] = self.bw as u8;
         buf[5] = self.sf;
@@ -159,7 +159,7 @@ impl Command {
                 }
                 let (config, pos) = if rest[0] == 0 {
                     (None, 1)
-                } else if rest[0] == 1 && rest.len() >= 1 + RADIO_CONFIG_SIZE {
+                } else if rest[0] == 1 && rest.len() > RADIO_CONFIG_SIZE {
                     (Some(RadioConfig::from_bytes(&rest[1..])?), 1 + RADIO_CONFIG_SIZE)
                 } else {
                     return None;
@@ -201,7 +201,7 @@ pub enum Response {
 
 impl Response {
     /// Serialize to fixed-size LE bytes. Returns number of bytes written.
-    pub fn to_bytes(&self, buf: &mut [u8]) -> usize {
+    pub fn write_to(self, buf: &mut [u8]) -> usize {
         match self {
             Self::Pong => {
                 buf[0] = 0;
@@ -209,14 +209,14 @@ impl Response {
             }
             Self::Config(cfg) => {
                 buf[0] = 1;
-                1 + cfg.to_bytes(&mut buf[1..])
+                1 + cfg.write_to(&mut buf[1..])
             }
             Self::RxPacket { rssi, snr, payload } => {
                 buf[0] = 2;
                 buf[1..3].copy_from_slice(&rssi.to_le_bytes());
                 buf[3..5].copy_from_slice(&snr.to_le_bytes());
                 buf[5..7].copy_from_slice(&(payload.len() as u16).to_le_bytes());
-                buf[7..7 + payload.len()].copy_from_slice(payload);
+                buf[7..7 + payload.len()].copy_from_slice(&payload);
                 7 + payload.len()
             }
             Self::TxDone => {
@@ -229,7 +229,7 @@ impl Response {
             }
             Self::Error(code) => {
                 buf[0] = 5;
-                buf[1] = *code as u8;
+                buf[1] = code as u8;
                 2
             }
         }
@@ -239,6 +239,7 @@ impl Response {
 /// Error codes reported to the host.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 #[repr(u8)]
+#[allow(dead_code)]
 pub enum ErrorCode {
     InvalidConfig = 0,
     RadioBusy = 1,

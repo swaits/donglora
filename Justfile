@@ -42,7 +42,7 @@ check board:
 
 # Run clippy on a single board
 clippy board:
-    @just _cargo {{board}} "clippy -- -D warnings"
+    @just _cargo {{board}} "clippy" "-- -D warnings"
 
 # Build release firmware and copy to firmware/ with a readable name
 build board profile="release":
@@ -68,7 +68,7 @@ size board:
 # Run a cargo command for a board.
 # Xtensa: nightly cargo + esp rustc (via RUSTC override) + -Zbuild-std=core
 [private]
-_cargo board cmd:
+_cargo board cmd extra_args="":
     @read -r feat target chip <<< "$(just _info {{board}})"; \
     env=""; extra=""; \
     case "$target" in xtensa-*) \
@@ -76,7 +76,7 @@ _cargo board cmd:
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
         env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly";; \
     esac; \
-    eval $env cargo $extra {{cmd}} --target $target --features $feat
+    eval $env cargo $extra {{cmd}} --target "$target" --features "$feat" {{extra_args}}
 
 # Check if a board's toolchain is available (silent, for build-all/check-all skipping)
 [private]
