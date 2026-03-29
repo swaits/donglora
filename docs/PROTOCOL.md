@@ -67,7 +67,7 @@ Postcard is a compact binary format. The subset used by DongLoRa:
 | `sf` | `u8` | varint | 5 – 12 | Spreading factor |
 | `cr` | `u8` | varint | 5 – 8 | Coding rate denominator (5 = CR 4/5) |
 | `sync_word` | `u16` | varint | any | LoRa sync word (e.g. `0x3444`) |
-| `tx_power_dbm` | `i8` | zigzag varint | -9 – +22 | TX power in dBm |
+| `tx_power_dbm` | `i8` | raw signed byte | board-dependent | TX power in dBm. `-128` = max power for this board. |
 
 ## Bandwidth
 

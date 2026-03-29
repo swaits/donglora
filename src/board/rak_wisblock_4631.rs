@@ -33,6 +33,9 @@ pub type UsbDriver = Driver<'static, USBD, &'static embassy_nrf::usb::vbus_detec
 /// I2C bus for an optional SSD1306 OLED.
 pub type DisplayI2c = Twim<'static, embassy_nrf::peripherals::TWISPI0>;
 
+/// TX power range for this board's radio (SX1262).
+pub const TX_POWER_RANGE: (i8, i8) = (-9, 22);
+
 // ── Peripheral bundles ───────────────────────────────────────────────
 
 pub struct RadioParts {

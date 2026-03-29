@@ -20,6 +20,9 @@ pub enum Bandwidth {
     Khz500 = 9,
 }
 
+/// Sentinel value for `tx_power_dbm`: use the board's maximum TX power.
+pub const TX_POWER_MAX: i8 = i8::MIN; // -128 on the wire
+
 /// Complete LoRa radio configuration.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
 pub struct RadioConfig {
@@ -31,13 +34,17 @@ pub struct RadioConfig {
     /// Coding rate denominator (5-8). E.g. 5 = CR 4/5, 8 = CR 4/8.
     pub cr: u8,
     pub sync_word: u16,
-    /// Transmit power in dBm (-9 to +22 for SX1262).
+    /// Transmit power in dBm. Set to [`TX_POWER_MAX`] (-128) for the
+    /// board's maximum. Actual range is board-dependent (e.g. -9 to +22
+    /// for SX1262). Values above the board max are clamped by the radio
+    /// driver; values below the board min are clamped too.
     pub tx_power_dbm: i8,
 }
 
 impl RadioConfig {
-    /// Validate all fields are within SX1262 hardware limits.
-    pub fn validate(&self) -> Result<(), &'static str> {
+    /// Validate fields against hardware limits. `power_range` is the
+    /// board's (min, max) TX power in dBm.
+    pub fn validate(&self, power_range: (i8, i8)) -> Result<(), &'static str> {
         if !(150_000_000..=960_000_000).contains(&self.freq_hz) {
             return Err("frequency out of range (150-960 MHz)");
         }
@@ -47,10 +54,21 @@ impl RadioConfig {
         if !(5..=8).contains(&self.cr) {
             return Err("coding rate out of range (5-8)");
         }
-        if !(-9..=22).contains(&self.tx_power_dbm) {
-            return Err("TX power out of range (-9 to +22 dBm)");
+        // TX_POWER_MAX sentinel is always valid (resolved to board max later)
+        if self.tx_power_dbm != TX_POWER_MAX
+            && !(power_range.0..=power_range.1).contains(&self.tx_power_dbm)
+        {
+            return Err("TX power out of range for this board");
         }
         Ok(())
+    }
+
+    /// Resolve the TX_POWER_MAX sentinel to the board's actual maximum.
+    pub fn resolve_power(mut self, power_range: (i8, i8)) -> Self {
+        if self.tx_power_dbm == TX_POWER_MAX {
+            self.tx_power_dbm = power_range.1;
+        }
+        self
     }
 }
 

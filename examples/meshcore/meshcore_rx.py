@@ -916,7 +916,7 @@ RADIO_CONFIG = {
     "sf": 7,
     "cr": 5,  # CR 4/5 — denominator value
     "sync_word": 0x3444,
-    "tx_power_dbm": 14,
+    "tx_power_dbm": -128,  # TX_POWER_MAX: use board's maximum
 }
 
 

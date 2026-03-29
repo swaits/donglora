@@ -25,6 +25,9 @@ pub type UsbDriver = esp_hal::otg_fs::asynch::Driver<'static>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
+/// TX power range for this board's radio (SX1262).
+pub const TX_POWER_RANGE: (i8, i8) = (-9, 22);
+
 // ── Peripheral bundles ───────────────────────────────────────────────
 
 pub struct RadioParts {

@@ -197,12 +197,15 @@ def connect(port: str | None = None, timeout: float = 2.0) -> serial.Serial:
     return ser
 
 
-# Default radio config: 915 MHz, 125 kHz BW, SF7, CR 4/5
+# Sentinel: set TX power to the board's maximum
+TX_POWER_MAX = -128  # i8::MIN on the wire
+
+# Default radio config: 915 MHz, 125 kHz BW, SF7, CR 4/5, max power
 DEFAULT_CONFIG = {
     "freq_hz": 915_000_000,
     "bw": 7,        # 125 kHz
     "sf": 7,
     "cr": 5,         # CR 4/5
     "sync_word": 0x1424,
-    "tx_power_dbm": 14,
+    "tx_power_dbm": TX_POWER_MAX,
 }
