@@ -388,4 +388,101 @@ mod tests {
         let dec_len = decode(encoded, &mut dec_buf).expect("decode failed");
         assert_eq!(&dec_buf[..dec_len], input, "round-trip mismatch");
     }
+
+    // ── Cross-validation against corncobs ────────────────────────
+
+    /// Encode with ours, decode with corncobs — must match.
+    /// Note: our encoder omits the trailing 0x00 sentinel; corncobs expects it.
+    fn cross_encode(input: &[u8]) {
+        let mut our_buf = vec![0u8; max_encoded_len(input.len()) + 2];
+        let our_len = encode(input, &mut our_buf).expect("our encode failed");
+        // Append sentinel for corncobs compatibility
+        our_buf[our_len] = 0x00;
+        let our_with_sentinel = &our_buf[..our_len + 1];
+
+        let mut their_buf = vec![0u8; input.len() + 1];
+        let their_len = corncobs::decode_buf(our_with_sentinel, &mut their_buf)
+            .expect("corncobs failed to decode our output");
+        assert_eq!(&their_buf[..their_len], input, "cross-encode mismatch");
+    }
+
+    /// Encode with corncobs, decode with ours — must match.
+    /// Note: corncobs includes the trailing 0x00 sentinel; our decoder doesn't expect it.
+    fn cross_decode(input: &[u8]) {
+        let mut their_buf = vec![0u8; corncobs::max_encoded_len(input.len())];
+        let their_len = corncobs::encode_buf(input, &mut their_buf);
+        // corncobs includes the sentinel — strip it for our decoder
+        let their_encoded = &their_buf[..their_len];
+        // Find the sentinel and exclude it
+        let data_end = their_encoded.iter().rposition(|&b| b != 0x00).map_or(0, |i| i + 1);
+        let their_no_sentinel = &their_encoded[..data_end];
+
+        let mut our_buf = vec![0u8; input.len() + 1];
+        let our_len = decode(their_no_sentinel, &mut our_buf)
+            .expect("our decode failed on corncobs output");
+        assert_eq!(&our_buf[..our_len], input, "cross-decode mismatch");
+    }
+
+    #[test]
+    fn interop_empty() {
+        cross_encode(&[]);
+        cross_decode(&[]);
+    }
+
+    #[test]
+    fn interop_single_zero() {
+        cross_encode(&[0x00]);
+        cross_decode(&[0x00]);
+    }
+
+    #[test]
+    fn interop_mixed() {
+        let data = [0x11, 0x22, 0x00, 0x33, 0x00, 0x00, 0x44];
+        cross_encode(&data);
+        cross_decode(&data);
+    }
+
+    #[test]
+    fn interop_254_block() {
+        let data: Vec<u8> = (1..=254).map(|i| i as u8).collect();
+        cross_encode(&data);
+        cross_decode(&data);
+    }
+
+    #[test]
+    fn interop_255_block() {
+        let data: Vec<u8> = (0..255).map(|i| (i + 1) as u8).collect();
+        cross_encode(&data);
+        cross_decode(&data);
+    }
+
+    #[test]
+    fn interop_random_payloads() {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        for _ in 0..500 {
+            let len = rng.gen_range(0..=512);
+            let data: Vec<u8> = (0..len).map(|_| rng.gen()).collect();
+            cross_encode(&data);
+            cross_decode(&data);
+        }
+    }
+
+    #[test]
+    fn interop_all_zeros() {
+        for len in [0, 1, 2, 10, 100, 254, 255, 256, 512] {
+            let data = vec![0u8; len];
+            cross_encode(&data);
+            cross_decode(&data);
+        }
+    }
+
+    #[test]
+    fn interop_all_ff() {
+        for len in [0, 1, 2, 10, 100, 254, 255, 256, 512] {
+            let data = vec![0xFFu8; len];
+            cross_encode(&data);
+            cross_decode(&data);
+        }
+    }
 }
