@@ -66,7 +66,7 @@ impl Board {
         // ── Vext power: GPIO36 ─────────────────────────────────────
         // V4 datasheet says "pull low to enable Vext"
         let vext = Output::new(p.GPIO36, Level::Low);
-        core::mem::forget(vext);
+        core::mem::forget(vext); // hold pin low permanently; drop would reset it
 
         // ── DMA for SPI ────────────────────────────────────────────
         let dma = Dma::new(p.DMA);
@@ -84,8 +84,8 @@ impl Board {
         .with_dma(dma_ch);
 
         let (rx_buf, rx_desc, tx_buf, tx_desc) = esp_hal::dma_buffers!(256);
-        let dma_rx = esp_hal::dma::DmaRxBuf::new(rx_desc, rx_buf).unwrap();
-        let dma_tx = esp_hal::dma::DmaTxBuf::new(tx_desc, tx_buf).unwrap();
+        let dma_rx = esp_hal::dma::DmaRxBuf::new(rx_desc, rx_buf).expect("DMA RX buf");
+        let dma_tx = esp_hal::dma::DmaTxBuf::new(tx_desc, tx_buf).expect("DMA TX buf");
 
         let spi = spi.with_buffers(dma_rx, dma_tx).into_async();
 
@@ -101,7 +101,7 @@ impl Board {
         let dio1 = Input::new(p.GPIO14, Pull::Down);
         let busy = Input::new(p.GPIO13, Pull::Down);
 
-        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).unwrap();
+        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).expect("SX1262 interface init");
 
         let sx_config = sx126x::Config {
             chip: Sx1262,
@@ -136,7 +136,7 @@ impl Board {
         esp_hal::delay::Delay::new().delay_millis(10);
         display_rst.set_high();
         esp_hal::delay::Delay::new().delay_millis(10);
-        core::mem::forget(display_rst);
+        core::mem::forget(display_rst); // hold reset high permanently
 
         let i2c = I2c::new(p.I2C0, I2cConfig::default())
             .with_sda(p.GPIO17)

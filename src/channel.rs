@@ -30,7 +30,9 @@ pub type CommandChannel = Channel<CriticalSectionRawMutex, Command, 16>;
 /// Radio-to-host response channel (depth 32: buffer RX packets while USB writes).
 pub type ResponseChannel = Channel<CriticalSectionRawMutex, Response, 32>;
 
-/// Observable radio status for the display task (2 slots: latest + previous).
+/// Observable radio status for the display task (2 receivers max).
+/// Display always sees the latest state — intermediate updates may be
+/// skipped, which is fine for a status display.
 pub type StatusWatch = Watch<CriticalSectionRawMutex, RadioStatus, 2>;
 
 /// Current radio state exposed to observers (e.g. display).

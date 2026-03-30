@@ -84,7 +84,7 @@ impl Board {
         let dio1 = Input::new(AnyPin::from(p.P1_15), Pull::Down);
         let busy = Input::new(AnyPin::from(p.P1_14), Pull::Down);
 
-        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).unwrap();
+        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).expect("SX1262 interface init");
 
         let sx_config = sx126x::Config {
             chip: Sx1262,

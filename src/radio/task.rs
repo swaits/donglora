@@ -33,7 +33,11 @@ const POWER_RANGE: (i8, i8) = TX_POWER_RANGE;
 
 type Radio = LoRa<RadioDriver, Delay>;
 
-// ── LoRa radio parameters ───────────────────────────────────────────
+// ── Fixed LoRa radio parameters ─────────────────────────────────────
+//
+// These are intentionally not host-configurable. They are sensible
+// defaults for a general-purpose LoRa pipe. Making them configurable
+// would add protocol complexity for marginal benefit.
 
 /// Preamble length in symbols. 8 is the LoRa default.
 const PREAMBLE_LEN: u16 = 8;

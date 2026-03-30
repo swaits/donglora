@@ -65,7 +65,7 @@ impl Board {
 
         // ── Vext power: GPIO21, active LOW to enable OLED ──────────
         let vext = Output::new(p.GPIO21, Level::Low);
-        core::mem::forget(vext);
+        core::mem::forget(vext); // hold pin low permanently; drop would reset it
 
         // ── DMA for SPI ────────────────────────────────────────────
         let dma = Dma::new(p.DMA);
@@ -83,8 +83,8 @@ impl Board {
         .with_dma(dma_ch);
 
         let (rx_buf, rx_desc, tx_buf, tx_desc) = esp_hal::dma_buffers!(256);
-        let dma_rx = esp_hal::dma::DmaRxBuf::new(rx_desc, rx_buf).unwrap();
-        let dma_tx = esp_hal::dma::DmaTxBuf::new(tx_desc, tx_buf).unwrap();
+        let dma_rx = esp_hal::dma::DmaRxBuf::new(rx_desc, rx_buf).expect("DMA RX buf");
+        let dma_tx = esp_hal::dma::DmaTxBuf::new(tx_desc, tx_buf).expect("DMA TX buf");
 
         let spi = spi.with_buffers(dma_rx, dma_tx).into_async();
 
@@ -100,7 +100,7 @@ impl Board {
         let dio1 = Input::new(p.GPIO14, Pull::Down);
         let busy = Input::new(p.GPIO13, Pull::Down);
 
-        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).unwrap();
+        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).expect("SX1262 interface init");
 
         let sx_config = sx126x::Config {
             chip: Sx1262,
