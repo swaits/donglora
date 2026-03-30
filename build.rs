@@ -8,7 +8,8 @@ fn main() {
         .expect("failed to read src/board directory")
         .filter_map(|e| {
             let p = e.ok()?.path();
-            if p.is_file() && p.extension()? == "rs" && p.file_stem()? != "mod" {
+            let stem = p.file_stem()?.to_str()?;
+            if p.is_file() && p.extension()? == "rs" && stem != "mod" && stem != "traits" {
                 return Some(p.file_stem()?.to_str()?.to_string());
             }
             None

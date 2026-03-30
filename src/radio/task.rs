@@ -24,12 +24,12 @@ use embassy_time::Delay;
 use lora_phy::mod_params::RadioError;
 use lora_phy::{LoRa, RxMode};
 
-use crate::board::{RadioDriver, RadioParts, TX_POWER_RANGE};
+use crate::board::{Board, LoRaBoard, RadioDriver, RadioParts};
 use crate::channel::{CommandChannel, RadioState, RadioStatus, ResponseChannel, StatusWatch};
 use crate::protocol::{self, Command, ErrorCode, RadioConfig, Response};
 
 const MAX_PAYLOAD: usize = protocol::MAX_PAYLOAD;
-const POWER_RANGE: (i8, i8) = TX_POWER_RANGE;
+// TX power range comes from the board trait: Board::TX_POWER_RANGE
 
 type Radio = LoRa<RadioDriver, Delay>;
 
@@ -178,14 +178,14 @@ async fn handle_cmd(
             }
         }
         Command::SetConfig(cfg) => {
-            if let Err(reason) = cfg.validate(POWER_RANGE) {
+            if let Err(reason) = cfg.validate(Board::TX_POWER_RANGE) {
                 warn!("SetConfig rejected: {}", reason);
                 responses
                     .send(Response::Error(ErrorCode::InvalidConfig))
                     .await;
             } else {
                 // Resolve TX_POWER_MAX sentinel to board's actual max
-                state.config = Some(cfg.resolve_power(POWER_RANGE));
+                state.config = Some(cfg.resolve_power(Board::TX_POWER_RANGE));
                 status.sender().send(state.clone());
                 responses.send(Response::Ok).await;
             }
@@ -221,9 +221,9 @@ async fn handle_cmd(
         }
         Command::DisplayOn | Command::DisplayOff => {}
         Command::Transmit { config, payload } => {
-            let tx_config = config.map(|c| c.resolve_power(POWER_RANGE)).or(state.config);
+            let tx_config = config.map(|c| c.resolve_power(Board::TX_POWER_RANGE)).or(state.config);
             if let Some(cfg) = tx_config {
-                if let Err(reason) = cfg.validate(POWER_RANGE) {
+                if let Err(reason) = cfg.validate(Board::TX_POWER_RANGE) {
                     warn!("TX config rejected: {}", reason);
                     responses
                         .send(Response::Error(ErrorCode::InvalidConfig))

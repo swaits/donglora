@@ -12,6 +12,8 @@ use static_cell::StaticCell;
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{self, Sx1262, Sx126x};
 
+use super::traits::LoRaBoard;
+
 bind_interrupts!(struct Irqs {
     USBD => embassy_nrf::usb::InterruptHandler<USBD>;
     SPIM3 => embassy_nrf::spim::InterruptHandler<embassy_nrf::peripherals::SPI3>;
@@ -32,9 +34,6 @@ pub type UsbDriver = Driver<'static, USBD, &'static embassy_nrf::usb::vbus_detec
 
 /// I2C bus for an optional SSD1306 OLED.
 pub type DisplayI2c = Twim<'static, embassy_nrf::peripherals::TWISPI0>;
-
-/// TX power range for this board's radio (SX1262).
-pub const TX_POWER_RANGE: (i8, i8) = (-9, 22);
 
 // ── Peripheral bundles ───────────────────────────────────────────────
 
@@ -58,11 +57,33 @@ pub struct Board {
     p: Peripherals,
 }
 
-impl Board {
-    pub fn init() -> Self {
+impl super::traits::LoRaBoard for Board {
+    const NAME: &'static str = "RAK WisBlock 4631";
+    const TX_POWER_RANGE: (i8, i8) = (-9, 22);
+
+    fn init() -> Self {
         let p = embassy_nrf::init(Default::default());
         Self { p }
     }
+
+    fn mac_address() -> [u8; 6] {
+        unsafe {
+            let ficr = 0x10000000 as *const u32;
+            let addr0 = core::ptr::read_volatile(ficr.byte_add(0x0A4));
+            let addr1 = core::ptr::read_volatile(ficr.byte_add(0x0A8));
+            [
+                addr0 as u8,
+                (addr0 >> 8) as u8,
+                (addr0 >> 16) as u8,
+                (addr0 >> 24) as u8,
+                addr1 as u8,
+                (addr1 >> 8) as u8,
+            ]
+        }
+    }
+}
+
+impl Board {
 
     pub fn into_parts(self) -> (RadioParts, UsbParts, Option<DisplayParts>) {
         let p = self.p;
@@ -111,22 +132,7 @@ impl Board {
         // via SSD1306 init (fails gracefully if no display attached).
         let i2c_cfg = twim::Config::default();
         let i2c = Twim::new(p.TWISPI0, Irqs, p.P0_13, p.P0_14, i2c_cfg);
-        // Read device address from FICR (factory info registers).
-        // FICR is at fixed address 0x10000000 on nRF52840.
-        let mac = unsafe {
-            let ficr = 0x10000000 as *const u32;
-            // DEVICEADDR[0] at offset 0x0A4, DEVICEADDR[1] at offset 0x0A8
-            let addr0 = core::ptr::read_volatile(ficr.byte_add(0x0A4));
-            let addr1 = core::ptr::read_volatile(ficr.byte_add(0x0A8));
-            [
-                addr0 as u8,
-                (addr0 >> 8) as u8,
-                (addr0 >> 16) as u8,
-                (addr0 >> 24) as u8,
-                addr1 as u8,
-                (addr1 >> 8) as u8,
-            ]
-        };
+        let mac = Self::mac_address();
         let display = Some(DisplayParts { i2c, mac });
 
         (radio, usb, display)

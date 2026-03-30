@@ -13,6 +13,8 @@ use static_cell::StaticCell;
 use lora_phy::iv::GenericSx126xInterfaceVariant;
 use lora_phy::sx126x::{self, Sx1262, Sx126x};
 
+use super::traits::LoRaBoard;
+
 // ── Concrete peripheral types ────────────────────────────────────────
 
 type SpiBus = SpiDmaBus<'static, esp_hal::Async>;
@@ -24,9 +26,6 @@ pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 pub type UsbDriver = esp_hal::otg_fs::asynch::Driver<'static>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
-
-/// TX power range for this board's radio (SX1262).
-pub const TX_POWER_RANGE: (i8, i8) = (-9, 22);
 
 // ── Peripheral bundles ───────────────────────────────────────────────
 
@@ -44,18 +43,27 @@ pub struct DisplayParts {
     pub mac: [u8; 6],
 }
 
-// ── Board init ───────────────────────────────────────────────────────
+// ── Board implementation ────────────────────────────────────────────
 
 pub struct Board {
     p: esp_hal::peripherals::Peripherals,
 }
 
-impl Board {
-    pub fn init() -> Self {
+impl LoRaBoard for Board {
+    const NAME: &'static str = "Heltec V4";
+    const TX_POWER_RANGE: (i8, i8) = (-9, 22);
+
+    fn init() -> Self {
         let p = esp_hal::init(esp_hal::Config::default());
         Self { p }
     }
 
+    fn mac_address() -> [u8; 6] {
+        esp_hal::efuse::Efuse::mac_address()
+    }
+}
+
+impl Board {
     pub fn into_parts(self) -> (RadioParts, UsbParts, Option<DisplayParts>) {
         let p = self.p;
 
@@ -64,7 +72,6 @@ impl Board {
         esp_hal_embassy::init(timg0.timer0);
 
         // ── Vext power: GPIO36 ─────────────────────────────────────
-        // V4 datasheet says "pull low to enable Vext"
         let vext = Output::new(p.GPIO36, Level::Low);
         core::mem::forget(vext); // hold pin low permanently; drop would reset it
 
@@ -101,7 +108,8 @@ impl Board {
         let dio1 = Input::new(p.GPIO14, Pull::Down);
         let busy = Input::new(p.GPIO13, Pull::Down);
 
-        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).expect("SX1262 interface init");
+        let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None)
+            .expect("SX1262 interface init");
 
         let sx_config = sx126x::Config {
             chip: Sx1262,
@@ -115,9 +123,8 @@ impl Board {
             delay: Delay,
         };
 
-        // ── USB Serial (via USB-Serial-JTAG, shares PHY safely) ───
-        // ── USB OTG CDC-ACM driver ──────────────────────────────
-        // Note: this switches the internal USB PHY from Serial-JTAG to OTG.
+        // ── USB OTG CDC-ACM ────────────────────────────────────────
+        // Note: switches internal USB PHY from Serial-JTAG to OTG.
         // espflash --monitor will stop working after this point.
         let usb_inst = esp_hal::otg_fs::Usb::new(p.USB0, p.GPIO20, p.GPIO19);
         static EP_OUT_BUF: StaticCell<[u8; 1024]> = StaticCell::new();
@@ -131,7 +138,6 @@ impl Board {
         };
 
         // ── Display (SSD1315 OLED on I2C, 0x3C) ───────────────────
-        // Reset display controller
         let mut display_rst = Output::new(p.GPIO21, Level::Low);
         esp_hal::delay::Delay::new().delay_millis(10);
         display_rst.set_high();
@@ -142,7 +148,7 @@ impl Board {
             .with_sda(p.GPIO17)
             .with_scl(p.GPIO18)
             .into_async();
-        let mac = esp_hal::efuse::Efuse::mac_address();
+        let mac = Self::mac_address();
         let display = Some(DisplayParts { i2c, mac });
 
         (radio, usb, display)

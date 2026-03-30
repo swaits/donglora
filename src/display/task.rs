@@ -9,17 +9,11 @@ use ssd1306::{I2CDisplayInterface, Ssd1306Async};
 use crate::board::DisplayParts;
 use crate::channel::{DisplayCommand, DisplayCommandChannel, RadioStatus, StatusWatch};
 
+use crate::board::{Board, LoRaBoard};
+
 use super::render::{self, RSSI_HISTORY_LEN};
 
-const BOARD_NAME: &str = if cfg!(feature = "rak_wisblock_4631") {
-    "RAK WisBlock 4631"
-} else if cfg!(feature = "heltec_v3") {
-    "Heltec v3"
-} else if cfg!(feature = "heltec_v4") {
-    "Heltec v4"
-} else {
-    "unknown"
-};
+const BOARD_NAME: &str = Board::NAME;
 
 /// Duration per sparkline slot. 64 slots * 1s = ~1 minute of history.
 const SPARK_SLOT_MS: u64 = 1000;

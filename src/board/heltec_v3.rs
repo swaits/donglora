@@ -1,3 +1,4 @@
+use super::traits::LoRaBoard;
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_time::Delay;
@@ -25,8 +26,6 @@ pub type UsbDriver = esp_hal::otg_fs::asynch::Driver<'static>;
 
 pub type DisplayI2c = I2c<'static, esp_hal::Async>;
 
-/// TX power range for this board's radio (SX1262).
-pub const TX_POWER_RANGE: (i8, i8) = (-9, 22);
 
 // ── Peripheral bundles ───────────────────────────────────────────────
 
@@ -50,12 +49,21 @@ pub struct Board {
     p: esp_hal::peripherals::Peripherals,
 }
 
-impl Board {
-    pub fn init() -> Self {
+impl LoRaBoard for Board {
+    const NAME: &'static str = "Heltec V3";
+    const TX_POWER_RANGE: (i8, i8) = (-9, 22);
+
+    fn init() -> Self {
         let p = esp_hal::init(esp_hal::Config::default());
         Self { p }
     }
 
+    fn mac_address() -> [u8; 6] {
+        esp_hal::efuse::Efuse::mac_address()
+    }
+}
+
+impl Board {
     pub fn into_parts(self) -> (RadioParts, UsbParts, Option<DisplayParts>) {
         let p = self.p;
 

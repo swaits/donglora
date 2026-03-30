@@ -341,6 +341,7 @@ dependencies = [
  "embassy-usb",
  "embassy-usb-driver",
  "embedded-graphics",
+ "embedded-hal-async",
  "embedded-io-async",
  "esp-backtrace",
  "esp-hal",

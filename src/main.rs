@@ -24,6 +24,7 @@ mod usb;
 
 use embassy_executor::Spawner;
 
+use crate::board::LoRaBoard;
 use crate::channel::{CommandChannel, DisplayCommandChannel, ResponseChannel, StatusWatch};
 
 cfg_if::cfg_if! {
@@ -55,7 +56,7 @@ cfg_if::cfg_if! {
 }
 
 async fn run(spawner: Spawner) {
-    let board = board::Board::init();
+    let board = <board::Board as LoRaBoard>::init();
     let (radio, usb, display) = board.into_parts();
 
     let has_display = display.is_some();
