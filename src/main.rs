@@ -1,3 +1,17 @@
+//! DongLoRa firmware — transparent LoRa radio over USB.
+//!
+//! Three async tasks communicate via static channels:
+//!
+//! ```text
+//! usb_task ──Command──► radio_task ──► SX1262
+//!          ◄──Response──     │
+//!                       StatusWatch
+//!                            ▼
+//!                      display_task (optional)
+//! ```
+//!
+//! The host drives everything. The radio idles until commanded.
+
 #![no_std]
 #![no_main]
 

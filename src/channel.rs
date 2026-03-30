@@ -1,3 +1,11 @@
+//! Inter-task communication channels.
+//!
+//! Each channel connects exactly two tasks:
+//! - [`CommandChannel`]: USB → Radio (host commands)
+//! - [`ResponseChannel`]: Radio → USB (firmware responses)
+//! - [`DisplayCommandChannel`]: USB → Display (on/off/reset)
+//! - [`StatusWatch`]: Radio → Display (observable radio state)
+
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
 use embassy_sync::watch::Watch;
@@ -13,16 +21,16 @@ pub enum DisplayCommand {
     Reset,
 }
 
-/// USB-to-display command channel.
+/// USB-to-display command channel (depth 4: display commands are rare events).
 pub type DisplayCommandChannel = Channel<CriticalSectionRawMutex, DisplayCommand, 4>;
 
-/// Host-to-radio command channel.
+/// Host-to-radio command channel (depth 16: buffer bursty host command sequences).
 pub type CommandChannel = Channel<CriticalSectionRawMutex, Command, 16>;
 
-/// Radio-to-host response channel.
+/// Radio-to-host response channel (depth 32: buffer RX packets while USB writes).
 pub type ResponseChannel = Channel<CriticalSectionRawMutex, Response, 32>;
 
-/// Observable radio status for the display task.
+/// Observable radio status for the display task (2 slots: latest + previous).
 pub type StatusWatch = Watch<CriticalSectionRawMutex, RadioStatus, 2>;
 
 /// Current radio state exposed to observers (e.g. display).
