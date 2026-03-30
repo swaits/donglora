@@ -193,6 +193,8 @@ where
         &state.rssi_history,
         &state.tx_history,
         state.rssi_count,
+        state.current_slot_rssi,
+        state.current_slot_tx,
         board,
     );
     let _ = display.flush().await;

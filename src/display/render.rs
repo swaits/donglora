@@ -40,6 +40,8 @@ pub fn dashboard(
     rssi_history: &[i16; RSSI_HISTORY_LEN],
     tx_history: &[bool; RSSI_HISTORY_LEN],
     rssi_count: usize,
+    current_slot_rssi: i16,
+    current_slot_tx: bool,
     board: &BoardInfo,
 ) {
     let _ = target.clear(BinaryColor::Off);
@@ -147,7 +149,14 @@ pub fn dashboard(
                 .ok();
 
             // RSSI sparkline (TX slots shown as dotted bars)
-            rssi_sparkline(target, rssi_history, tx_history, rssi_count);
+            rssi_sparkline(
+                target,
+                rssi_history,
+                tx_history,
+                rssi_count,
+                current_slot_rssi,
+                current_slot_tx,
+            );
         }
         None => {
             // Row 1: "DongLoRa" bold left, version small right
@@ -188,63 +197,107 @@ pub fn dashboard(
 /// regardless of packet rate. RX slots draw solid bars; TX slots draw
 /// dotted bars (alternating pixel rows). TX takes precedence if both
 /// occurred in the same slot.
+///
+/// The current (uncommitted) slot is rendered at the rightmost position
+/// so that incoming packets appear on the graph immediately, before the
+/// slot timer commits them to history.
 fn rssi_sparkline(
     target: &mut impl DrawTarget<Color = BinaryColor>,
     history: &[i16; RSSI_HISTORY_LEN],
     tx_history: &[bool; RSSI_HISTORY_LEN],
     count: usize,
+    current_rssi: i16,
+    current_tx: bool,
 ) {
-    if count == 0 {
+    let live = current_rssi > RSSI_MIN || current_tx;
+    // Total bars: committed history + optional live bar
+    let committed = count.min(RSSI_HISTORY_LEN);
+    // If live bar is active, reserve the rightmost slot for it
+    let hist_slots = if live {
+        committed.min(RSSI_HISTORY_LEN - 1)
+    } else {
+        committed
+    };
+    let total = hist_slots + if live { 1 } else { 0 };
+
+    if total == 0 {
         return;
     }
 
-    let n = count.min(RSSI_HISTORY_LEN);
     let fill = PrimitiveStyle::with_fill(BinaryColor::On);
 
-    for i in 0..n {
+    // Draw committed history (shifted left by 1 when live bar is present)
+    for i in 0..hist_slots {
         let idx = if count <= RSSI_HISTORY_LEN {
-            i
+            // Buffer hasn't wrapped yet — if live bar is active, skip
+            // the oldest slot if we've hit the display limit.
+            if live && committed == RSSI_HISTORY_LEN {
+                // Full buffer + live: drop oldest committed slot
+                i + 1
+            } else {
+                i
+            }
         } else {
-            (count - RSSI_HISTORY_LEN + i) % RSSI_HISTORY_LEN
+            let start = count - RSSI_HISTORY_LEN;
+            let start = if live { start + 1 } else { start };
+            (start + i) % RSSI_HISTORY_LEN
         };
         let is_tx = tx_history[idx];
         let rssi = history[idx];
 
-        // TX slots with no RSSI: show a short fixed-height dotted bar
-        let bar_h = if rssi <= RSSI_MIN {
-            if is_tx {
-                SPARK_H / 3 // small marker for TX-only slots
-            } else {
-                continue; // empty slot
-            }
-        } else {
-            let clamped = rssi.clamp(RSSI_MIN, RSSI_MAX);
-            ((clamped - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32
-        };
-        if bar_h == 0 {
-            continue;
+        if let Some(bar_h) = bar_height(rssi, is_tx) {
+            let x = (RSSI_HISTORY_LEN - total + i) as i32 * 2;
+            draw_bar(target, x, bar_h, is_tx, &fill);
         }
+    }
 
-        let x = (RSSI_HISTORY_LEN - n + i) as i32 * 2;
-        let y = SPARK_TOP + SPARK_H - bar_h;
+    // Draw live (current) bar at the rightmost position
+    if live {
+        if let Some(bar_h) = bar_height(current_rssi, current_tx) {
+            let x = (RSSI_HISTORY_LEN - 1) as i32 * 2;
+            draw_bar(target, x, bar_h, current_tx, &fill);
+        }
+    }
+}
 
+/// Compute the pixel height for a sparkline bar, or None to skip.
+fn bar_height(rssi: i16, is_tx: bool) -> Option<i32> {
+    let h = if rssi <= RSSI_MIN {
         if is_tx {
-            // Dotted bar: draw every other pixel row
-            for row in 0..bar_h {
-                if row % 2 == 0 {
-                    Rectangle::new(Point::new(x, y + row), Size::new(2, 1))
-                        .into_styled(fill)
-                        .draw(target)
-                        .ok();
-                }
-            }
+            SPARK_H / 3
         } else {
-            // Solid bar for RX
-            Rectangle::new(Point::new(x, y), Size::new(2, bar_h as u32))
-                .into_styled(fill)
-                .draw(target)
-                .ok();
+            return None;
         }
+    } else {
+        let clamped = rssi.clamp(RSSI_MIN, RSSI_MAX);
+        ((clamped - RSSI_MIN) as i32 * SPARK_H) / (RSSI_MAX - RSSI_MIN) as i32
+    };
+    if h == 0 { None } else { Some(h) }
+}
+
+/// Draw a single sparkline bar (solid for RX, dotted for TX).
+fn draw_bar(
+    target: &mut impl DrawTarget<Color = BinaryColor>,
+    x: i32,
+    bar_h: i32,
+    is_tx: bool,
+    fill: &PrimitiveStyle<BinaryColor>,
+) {
+    let y = SPARK_TOP + SPARK_H - bar_h;
+    if is_tx {
+        for row in 0..bar_h {
+            if row % 2 == 0 {
+                Rectangle::new(Point::new(x, y + row), Size::new(2, 1))
+                    .into_styled(*fill)
+                    .draw(target)
+                    .ok();
+            }
+        }
+    } else {
+        Rectangle::new(Point::new(x, y), Size::new(2, bar_h as u32))
+            .into_styled(*fill)
+            .draw(target)
+            .ok();
     }
 }
 
