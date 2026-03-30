@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "crates/donglora-cobs"]
+
 [package]
 name = "donglora"
 version = "0.1.0"
@@ -21,7 +24,7 @@ embassy-sync = "0.6"
 embassy-time = "0.3"
 embassy-usb = { version = "0.3", features = ["defmt"] }
 embassy-usb-driver = "0.1"
-cobs = { version = "0.3", default-features = false }
+donglora-cobs = { path = "crates/donglora-cobs" }
 heapless = "0.8"
 lora-phy = "3.0"
 static_cell = "2.1"

@@ -124,7 +124,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                         if frame_len > 0 {
                             let mut decode_buf = [0u8; MAX_FRAME];
                             if let Some(decoded_len) =
-                                cobs_decode(&frame_buf[..frame_len], &mut decode_buf)
+                                donglora_cobs::decode(&frame_buf[..frame_len], &mut decode_buf)
                             {
                                 if let Some(cmd) = Command::from_bytes(&decode_buf[..decoded_len]) {
                                     route_command(
@@ -147,7 +147,8 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
             Either3::Second(response) => {
                 // Serialize response to fixed-size LE bytes, then COBS encode
                 let raw_len = response.write_to(&mut write_buf);
-                let encoded_len = cobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf);
+                let encoded_len = donglora_cobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf)
+                    .unwrap_or(0);
                 // Append 0x00 sentinel
                 if encoded_len < cobs_encode_buf.len() {
                     cobs_encode_buf[encoded_len] = 0x00;
@@ -209,32 +210,135 @@ async fn route_command(
     }
 }
 
-/// Decode a COBS-encoded buffer (without the trailing 0x00 sentinel).
-/// Returns the number of decoded bytes, or None on error.
-fn cobs_decode(src: &[u8], dest: &mut [u8]) -> Option<usize> {
-    let mut si = 0;
-    let mut di = 0;
-    while si < src.len() {
-        let code = src[si] as usize;
-        si += 1;
-        if code == 0 {
-            return None; // unexpected zero in COBS data
-        }
-        for _ in 1..code {
-            if si >= src.len() || di >= dest.len() {
-                return None;
-            }
-            dest[di] = src[si];
-            di += 1;
-            si += 1;
-        }
-        if code < 0xFF && si < src.len() {
-            if di >= dest.len() {
-                return None;
-            }
-            dest[di] = 0;
-            di += 1;
-        }
+
+// ── COBS compliance tests (IEEE/ACM Cheshire & Baker 1999) ──────
+
+#[cfg(test)]
+mod tests {
+    use super::cobs_decode;
+
+    fn decode(encoded: &[u8]) -> Option<Vec<u8>> {
+        let mut buf = vec![0u8; 512];
+        cobs_decode(encoded, &mut buf).map(|n| buf[..n].to_vec())
     }
-    Some(di)
+
+    // Wikipedia canonical vectors
+    #[test]
+    fn empty_input() {
+        assert_eq!(decode(&[0x01]), Some(vec![]));
+    }
+
+    #[test]
+    fn single_zero() {
+        assert_eq!(decode(&[0x01, 0x01]), Some(vec![0x00]));
+    }
+
+    #[test]
+    fn two_zeros() {
+        assert_eq!(decode(&[0x01, 0x01, 0x01]), Some(vec![0x00, 0x00]));
+    }
+
+    #[test]
+    fn single_nonzero() {
+        assert_eq!(decode(&[0x02, 0x11]), Some(vec![0x11]));
+    }
+
+    #[test]
+    fn zero_delimited() {
+        assert_eq!(
+            decode(&[0x01, 0x02, 0x11, 0x01]),
+            Some(vec![0x00, 0x11, 0x00])
+        );
+    }
+
+    #[test]
+    fn mixed_with_zero() {
+        assert_eq!(
+            decode(&[0x03, 0x11, 0x22, 0x02, 0x33]),
+            Some(vec![0x11, 0x22, 0x00, 0x33])
+        );
+    }
+
+    #[test]
+    fn no_zeros() {
+        assert_eq!(
+            decode(&[0x05, 0x11, 0x22, 0x33, 0x44]),
+            Some(vec![0x11, 0x22, 0x33, 0x44])
+        );
+    }
+
+    #[test]
+    fn nonzero_then_trailing_zeros() {
+        assert_eq!(
+            decode(&[0x02, 0x11, 0x01, 0x01, 0x01]),
+            Some(vec![0x11, 0x00, 0x00, 0x00])
+        );
+    }
+
+    #[test]
+    fn all_zeros_4() {
+        assert_eq!(
+            decode(&[0x01, 0x01, 0x01, 0x01, 0x01]),
+            Some(vec![0x00, 0x00, 0x00, 0x00])
+        );
+    }
+
+    #[test]
+    fn all_ff_4() {
+        assert_eq!(
+            decode(&[0x05, 0xFF, 0xFF, 0xFF, 0xFF]),
+            Some(vec![0xFF, 0xFF, 0xFF, 0xFF])
+        );
+    }
+
+    #[test]
+    fn alternating_zero_nonzero() {
+        assert_eq!(
+            decode(&[0x01, 0x02, 0x01, 0x02, 0x02, 0x02, 0x03]),
+            Some(vec![0x00, 0x01, 0x00, 0x02, 0x00, 0x03])
+        );
+    }
+
+    // The Ping case that caught the original bug
+    #[test]
+    fn ping_command_tag_zero() {
+        assert_eq!(decode(&[0x01, 0x01]), Some(vec![0x00]));
+    }
+
+    // 254-byte block boundary (code 0xFF = 254 data bytes, no implicit zero)
+    #[test]
+    fn block_254_nonzero() {
+        let input: Vec<u8> = (1..=254).collect();
+        let mut encoded = vec![0xFF];
+        encoded.extend(1u8..=254);
+        assert_eq!(decode(&encoded), Some(input));
+    }
+
+    // 255 non-zero bytes: first 254 as one block, then 1 leftover
+    #[test]
+    fn block_255_nonzero() {
+        let input: Vec<u8> = (1..=255).map(|i| i as u8).collect();
+        let mut encoded = vec![0xFF];
+        encoded.extend(1u8..=254);
+        encoded.push(0x02); // code for 1 data byte
+        encoded.push(0xFF); // the 255th byte
+        assert_eq!(decode(&encoded), Some(input));
+    }
+
+    // Error cases
+    #[test]
+    fn unexpected_zero_in_data() {
+        assert_eq!(decode(&[0x00]), None);
+    }
+
+    #[test]
+    fn truncated_input() {
+        // Code says 3 data bytes follow, but only 1 available
+        assert_eq!(decode(&[0x04, 0x11]), None);
+    }
+
+    #[test]
+    fn empty_encoded() {
+        assert_eq!(decode(&[]), Some(vec![]));
+    }
 }

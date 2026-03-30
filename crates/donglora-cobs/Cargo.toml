@@ -1,0 +1,9 @@
+[package]
+name = "donglora-cobs"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "COBS encoder/decoder — no_std, zero-alloc, spec-compliant"
+
+[features]
+default = []
