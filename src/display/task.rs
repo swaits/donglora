@@ -81,6 +81,23 @@ pub async fn display_task(
     status: &'static StatusWatch,
     display_commands: &'static DisplayCommandChannel,
 ) {
+    // Format MAC address as "XX:XX:XX:XX:XX:XX"
+    let mut mac_str: heapless::String<18> = heapless::String::new();
+    let m = parts.mac;
+    let _ = core::fmt::Write::write_fmt(
+        &mut mac_str,
+        format_args!(
+            "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+            m[0], m[1], m[2], m[3], m[4], m[5]
+        ),
+    );
+
+    let board_info = render::BoardInfo {
+        name: BOARD_NAME,
+        version: env!("CARGO_PKG_VERSION"),
+        mac: &mac_str,
+    };
+
     let interface = I2CDisplayInterface::new(parts.i2c);
     let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
@@ -104,7 +121,7 @@ pub async fn display_task(
     };
 
     // Show splash/waiting screen (dashboard with no config renders it)
-    render_and_flush(&mut display, &state).await;
+    render_and_flush(&mut display, &state, &board_info).await;
 
     loop {
         match select3(
@@ -129,7 +146,7 @@ pub async fn display_task(
                 state.last_status = radio_status;
 
                 if state.display_on {
-                    render_and_flush(&mut display, &state).await;
+                    render_and_flush(&mut display, &state, &board_info).await;
                 }
             }
             Either3::Second(cmd) => match cmd {
@@ -145,18 +162,18 @@ pub async fn display_task(
                     if let Some(s) = receiver.try_get() {
                         state.last_status = s;
                     }
-                    render_and_flush(&mut display, &state).await;
+                    render_and_flush(&mut display, &state, &board_info).await;
                 }
                 DisplayCommand::Reset => {
                     state = DisplayState::new();
-                    render_and_flush(&mut display, &state).await;
+                    render_and_flush(&mut display, &state, &board_info).await;
                 }
             },
             Either3::Third(()) => {
                 // Timer tick: advance sparkline slot
                 state.advance_slot();
                 if state.display_on {
-                    render_and_flush(&mut display, &state).await;
+                    render_and_flush(&mut display, &state, &board_info).await;
                 }
             }
         }
@@ -171,7 +188,7 @@ type Display<I> = ssd1306::Ssd1306Async<
     ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
 >;
 
-async fn render_and_flush<I>(display: &mut Display<I>, state: &DisplayState)
+async fn render_and_flush<I>(display: &mut Display<I>, state: &DisplayState, board: &render::BoardInfo<'_>)
 where
     I: display_interface::AsyncWriteOnlyDataCommand,
 {
@@ -181,8 +198,7 @@ where
         &state.rssi_history,
         &state.tx_history,
         state.rssi_count,
-        BOARD_NAME,
-        env!("CARGO_PKG_VERSION"),
+        board,
     );
     let _ = display.flush().await;
 }

@@ -26,6 +26,13 @@ const SPARK_H: i32 = 19; // y=45..63
 const RSSI_MIN: i16 = -120;
 const RSSI_MAX: i16 = 0;
 
+/// Static board identity info for display rendering.
+pub struct BoardInfo<'a> {
+    pub name: &'a str,
+    pub version: &'a str,
+    pub mac: &'a str,
+}
+
 /// Render the main status dashboard.
 pub fn dashboard(
     target: &mut impl DrawTarget<Color = BinaryColor>,
@@ -33,16 +40,14 @@ pub fn dashboard(
     rssi_history: &[i16; RSSI_HISTORY_LEN],
     tx_history: &[bool; RSSI_HISTORY_LEN],
     rssi_count: usize,
-    board_name: &str,
-    version: &str,
+    board: &BoardInfo,
 ) {
     let _ = target.clear(BinaryColor::Off);
     let style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
+    let mut buf: String<32> = String::new();
 
     match status.config {
         Some(cfg) => {
-            // Row 0: state + frequency, TX power right-justified
-            let mut buf: String<32> = String::new();
             let freq_mhz = cfg.freq_hz / 1_000_000;
             let freq_khz = (cfg.freq_hz % 1_000_000) / 1_000;
             let _ = write!(buf, "     {}.{:03}MHz", freq_mhz, freq_khz);
@@ -145,24 +150,30 @@ pub fn dashboard(
             rssi_sparkline(target, rssi_history, tx_history, rssi_count);
         }
         None => {
+            // Row 1: "DongLoRa" in bold
             let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
             Text::with_alignment(
                 "DongLoRa",
-                Point::new(W / 2, 24),
+                Point::new(W / 2, 15),
                 title_style,
                 Alignment::Center,
             )
             .draw(target)
             .ok();
-            Text::with_alignment(version, Point::new(W / 2, 38), style, Alignment::Center)
+            // Row 2: "Board Name v0.1.0"
+            buf.clear();
+            let _ = write!(buf, "{} v{}", board.name, board.version);
+            Text::with_alignment(&buf, Point::new(W / 2, 28), style, Alignment::Center)
                 .draw(target)
                 .ok();
-            Text::with_alignment(board_name, Point::new(W / 2, 50), style, Alignment::Center)
+            // Row 3: MAC address
+            Text::with_alignment(board.mac, Point::new(W / 2, 41), style, Alignment::Center)
                 .draw(target)
                 .ok();
+            // Row 4: status
             Text::with_alignment(
                 "Waiting for host...",
-                Point::new(W / 2, 63),
+                Point::new(W / 2, 54),
                 style,
                 Alignment::Center,
             )

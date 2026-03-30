@@ -41,6 +41,7 @@ pub struct UsbParts {
 
 pub struct DisplayParts {
     pub i2c: DisplayI2c,
+    pub mac: [u8; 6],
 }
 
 // ── Board init ───────────────────────────────────────────────────────
@@ -130,7 +131,8 @@ impl Board {
             .with_sda(p.GPIO17)
             .with_scl(p.GPIO18)
             .into_async();
-        let display = Some(DisplayParts { i2c });
+        let mac = esp_hal::efuse::Efuse::mac_address();
+        let display = Some(DisplayParts { i2c, mac });
 
         (radio, usb, display)
     }

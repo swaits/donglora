@@ -49,6 +49,7 @@ pub struct UsbParts {
 
 pub struct DisplayParts {
     pub i2c: DisplayI2c,
+    pub mac: [u8; 6],
 }
 
 // ── Board init ───────────────────────────────────────────────────────
@@ -110,7 +111,23 @@ impl Board {
         // via SSD1306 init (fails gracefully if no display attached).
         let i2c_cfg = twim::Config::default();
         let i2c = Twim::new(p.TWISPI0, Irqs, p.P0_13, p.P0_14, i2c_cfg);
-        let display = Some(DisplayParts { i2c });
+        // Read device address from FICR (factory info registers).
+        // FICR is at fixed address 0x10000000 on nRF52840.
+        let mac = unsafe {
+            let ficr = 0x10000000 as *const u32;
+            // DEVICEADDR[0] at offset 0x0A4, DEVICEADDR[1] at offset 0x0A8
+            let addr0 = core::ptr::read_volatile(ficr.byte_add(0x0A4));
+            let addr1 = core::ptr::read_volatile(ficr.byte_add(0x0A8));
+            [
+                addr0 as u8,
+                (addr0 >> 8) as u8,
+                (addr0 >> 16) as u8,
+                (addr0 >> 24) as u8,
+                addr1 as u8,
+                (addr1 >> 8) as u8,
+            ]
+        };
+        let display = Some(DisplayParts { i2c, mac });
 
         (radio, usb, display)
     }
