@@ -1,5 +1,6 @@
 [workspace]
 members = [".", "crates/donglora-cobs"]
+exclude = ["crates/donglora-cobs/fuzz"]
 
 [package]
 name = "donglora"
