@@ -42,7 +42,10 @@ try:
     print("\n── DisplayOn ──")
     print(dl.send(ser, "DisplayOn"))
 
-    print("\nAll 8 commands exercised successfully.")
+    print("\n── GetMac ──")
+    print(dl.send(ser, "GetMac"))
+
+    print("\nAll 9 commands exercised successfully.")
 
 except KeyboardInterrupt:
     print("\nInterrupted.")

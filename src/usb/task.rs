@@ -207,6 +207,12 @@ async fn route_command(
                 responses.send(Response::Error(ErrorCode::NoDisplay)).await;
             }
         }
+        Command::GetMac => {
+            use crate::board::{Board, LoRaBoard};
+            responses
+                .send(Response::MacAddress(Board::mac_address()))
+                .await;
+        }
         other => {
             commands.send(other).await;
         }

@@ -59,6 +59,7 @@ Each command is a tag byte followed by fixed-size fields.
 | 5 | Transmit | has_config (1) + [RadioConfig if 1] + len (u16 LE) + payload |
 | 6 | DisplayOn | — |
 | 7 | DisplayOff | — |
+| 8 | GetMac | — |
 
 ## Responses (Firmware → Host)
 
@@ -70,6 +71,7 @@ Each command is a tag byte followed by fixed-size fields.
 | 3 | TxDone | — |
 | 4 | Ok | — |
 | 5 | Error | code (u8) |
+| 6 | MacAddress | 6 raw bytes (board's MAC/device address) |
 
 ## Bandwidth
 
@@ -128,9 +130,10 @@ Read back the response, COBS-decode it. First byte `0x04` = Ok.
 1. Open USB serial port (find by VID:PID `1209:5741`)
 2. Implement COBS encode/decode (libraries exist for every language)
 3. Pack commands with `struct.pack` or equivalent — all fields are fixed-size LE
-4. Send `SetConfig`, read back `Ok`
-5. Send `StartRx`, read back `Ok`
-6. Loop: read frames, decode `RxPacket` (rssi, snr, payload at known offsets)
-7. To transmit: send `Transmit`, read back `TxDone`
+4. Optionally send `GetMac`, read back `MacAddress` (useful with multiple dongles)
+5. Send `SetConfig`, read back `Ok`
+6. Send `StartRx`, read back `Ok`
+7. Loop: read frames, decode `RxPacket` (rssi, snr, payload at known offsets)
+8. To transmit: send `Transmit`, read back `TxDone`
 
 See `examples/` for working Python implementations.

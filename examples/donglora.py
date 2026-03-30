@@ -99,6 +99,7 @@ def encode_command(cmd: str, **kwargs) -> bytes:
     tags = {
         "Ping": 0, "GetConfig": 1, "SetConfig": 2, "StartRx": 3,
         "StopRx": 4, "Transmit": 5, "DisplayOn": 6, "DisplayOff": 7,
+        "GetMac": 8,
     }
     out = bytes([tags[cmd]])
     if cmd == "SetConfig":
@@ -144,6 +145,11 @@ def decode_response(data: bytes) -> dict:
     elif tag == 5:
         code = rest[0] if rest else -1
         return {"type": "Error", "code": code}
+    elif tag == 6:
+        if len(rest) >= 6:
+            mac = ":".join(f"{b:02X}" for b in rest[:6])
+            return {"type": "MacAddress", "mac": mac}
+        return {"type": "MacAddress", "raw": rest.hex()}
     else:
         return {"type": f"Unknown({tag})"}
 

@@ -139,6 +139,7 @@ pub enum Command {
     },
     DisplayOn,
     DisplayOff,
+    GetMac,
 }
 
 impl Command {
@@ -178,6 +179,7 @@ impl Command {
             }
             6 => Some(Self::DisplayOn),
             7 => Some(Self::DisplayOff),
+            8 => Some(Self::GetMac),
             _ => None,
         }
     }
@@ -197,6 +199,7 @@ pub enum Response {
     TxDone,
     Ok,
     Error(ErrorCode),
+    MacAddress([u8; 6]),
 }
 
 impl Response {
@@ -231,6 +234,11 @@ impl Response {
                 buf[0] = 5;
                 buf[1] = code as u8;
                 2
+            }
+            Self::MacAddress(mac) => {
+                buf[0] = 6;
+                buf[1..7].copy_from_slice(&mac);
+                7
             }
         }
     }

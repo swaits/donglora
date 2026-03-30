@@ -219,7 +219,7 @@ async fn handle_cmd(
             status.sender().send(state.clone());
             responses.send(Response::Ok).await;
         }
-        Command::DisplayOn | Command::DisplayOff => {}
+        Command::DisplayOn | Command::DisplayOff | Command::GetMac => {}
         Command::Transmit { config, payload } => {
             let tx_config = config.map(|c| c.resolve_power(Board::TX_POWER_RANGE)).or(state.config);
             if let Some(cfg) = tx_config {
