@@ -1,6 +1,5 @@
 [workspace]
-members = [".", "crates/donglora-cobs"]
-exclude = ["crates/donglora-cobs/fuzz"]
+members = ["."]
 
 [package]
 name = "donglora"
@@ -26,7 +25,7 @@ embassy-sync = "0.6"
 embassy-time = "0.3"
 embassy-usb = { version = "0.3", features = ["defmt"] }
 embassy-usb-driver = "0.1"
-donglora-cobs = { path = "crates/donglora-cobs" }
+ucobs = { path = "../ucobs" }
 heapless = "0.8"
 lora-phy = "3.0"
 static_cell = "2.1"

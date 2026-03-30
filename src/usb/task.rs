@@ -127,7 +127,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                         if frame_len > 0 {
                             let mut decode_buf = [0u8; MAX_FRAME];
                             if let Some(decoded_len) =
-                                donglora_cobs::decode(&frame_buf[..frame_len], &mut decode_buf)
+                                ucobs::decode(&frame_buf[..frame_len], &mut decode_buf)
                             {
                                 if let Some(cmd) = Command::from_bytes(&decode_buf[..decoded_len]) {
                                     route_command(
@@ -150,7 +150,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
             Either3::Second(response) => {
                 // Serialize response to fixed-size LE bytes, then COBS encode
                 let raw_len = response.write_to(&mut write_buf);
-                let encoded_len = donglora_cobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf)
+                let encoded_len = ucobs::encode(&write_buf[..raw_len], &mut cobs_encode_buf)
                     .unwrap_or(0);
                 // Append 0x00 sentinel
                 if encoded_len < cobs_encode_buf.len() {
