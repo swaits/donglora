@@ -105,7 +105,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
         match select3(
             receiver.read_packet(&mut read_buf),
             responses.receive(),
-            embassy_time::Timer::after_millis(250),
+            embassy_time::Timer::after_millis(250), // DTR poll interval for disconnect detection
         )
         .await
         {

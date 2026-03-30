@@ -24,7 +24,8 @@ const BOARD_NAME: &str = if cfg!(feature = "rak_wisblock_4631") {
 /// Duration per sparkline slot. 64 slots * 1s = ~1 minute of history.
 const SPARK_SLOT_MS: u64 = 1000;
 
-/// Sentinel: no packet received in this slot.
+/// Sentinel: no packet received in this slot. Below SX1262 sensitivity
+/// floor (-120 dBm), so it cannot be confused with a real RSSI value.
 const NO_SIGNAL: i16 = -121;
 
 struct DisplayState {
