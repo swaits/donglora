@@ -274,4 +274,8 @@ Public,False,8b3387e9c5cdea6ac9e5edbaa115cd72,17,"Default public channel (fixed 
 #saltlake,True,56327c6958d9108213f8638fb2a2b7a4,173,Salt Lake (alternate),US-UT
 #tooele,True,092cbdcf351bdbe77ce6c00e1dbeb294,184,Tooele,US-UT
 #sanpete,True,4ae01748b17bfc90e13004f19e734bbc,151,Sanpete County,US-UT
+#nodeops,True,33677d99a0e707e37b57de3e3cd26cf3,151,Node operations channel,topical
+#weekly-net,True,bdc4f5cb11e766c9a09eeb3586e65a58,18,Weekly net check-in,topical
+#net,True,13aef6b8ce642cf4c482b91f0816fe68,157,Net channel,topical
+#repeater-ops,True,915c91c726e0c9d558365a7ecc72bbd6,108,Repeater operations,topical
 #watchman,True,11489fe661e776b3ccdcf864bd14f7d6,245,Watchman mesh health alerts,global
