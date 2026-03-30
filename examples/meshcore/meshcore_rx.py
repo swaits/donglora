@@ -147,7 +147,7 @@ def _init_channels():
     """Load channels from channels.csv. Hashtag channels use key derivation;
     PSK channels (hashtag=False) use the raw key_hex."""
     if not _CHANNELS_CSV.is_file():
-        print(f"{RED}channels.csv not found at {_CHANNELS_CSV}{RST}")
+        print(f"  {RED}channels.csv not found at {_CHANNELS_CSV}{RST}")
         return
     with open(_CHANNELS_CSV, newline="") as f:
         for row in csv.DictReader(f):
@@ -204,16 +204,14 @@ def _grp_transmit(ser, channel_name: str, sender: str, text: str):
     payload = _grp_encrypt(secret, sender, text)
     packet = _grp_build_packet(payload)
     try:
-        send_cmd(
-            ser, {"type": "Transmit", "payload": packet}, f"TX GRP_TXT → {channel_name}"
-        )
-    except Exception as e:
-        print(f"  {RED}[TX failed: {e}]{RST}")
+        send_cmd(ser, {"type": "Transmit", "payload": packet}, quiet=True)
+    except Exception:
+        pass
     # Always try to resume RX, even if TX failed
     try:
-        send_cmd(ser, {"type": "StartRx"}, "StartRx (resume)")
-    except Exception as e:
-        print(f"  {RED}[StartRx failed: {e}]{RST}")
+        send_cmd(ser, {"type": "StartRx"}, quiet=True)
+    except Exception:
+        pass
 
 
 # ── Loop/collision aggregator ─────────────────────────────────────
@@ -339,7 +337,7 @@ class LoopAggregator:
         if len(full) > max_len:
             full = full[: max_len - 5] + "+more"
 
-        print(f"  {BYEL}>>> Reporting to {REPORT_CHANNEL}: {full}{RST}")
+        print(f"  {DIM}>>>{RST} {BYEL}Report → {REPORT_CHANNEL}:{RST} {full}")
         _grp_transmit(ser, REPORT_CHANNEL, REPORT_SENDER, full)
         self._reset()
 
@@ -387,14 +385,14 @@ def find_serial_port() -> str | None:
 
 def wait_for_device() -> str:
     """Poll until the USB device appears."""
-    print("Waiting for DongLoRa...", end="", flush=True)
+    print(f"  {DIM}Waiting for DongLoRa...{RST}", end="", flush=True)
     while True:
         port = find_serial_port()
         if port:
-            print(f" found {port}")
+            print(f" {GRN}{port}{RST}")
             time.sleep(0.3)  # let the device settle
             return port
-        print(".", end="", flush=True)
+        print(f"{DIM}.{RST}", end="", flush=True)
         time.sleep(0.5)
 
 
@@ -924,18 +922,37 @@ def _decode_control(prefix: str, payload: bytes) -> str:
 # ── Main ───────────────────────────────────────────────────────────
 
 
-def send_cmd(ser: serial.Serial, cmd: dict, label: str) -> dict | None:
+def _format_response(resp: dict) -> str:
+    """Format a response dict for themed display."""
+    t = resp["type"]
+    if t == "Pong":
+        return "Pong"
+    if t == "Ok":
+        return "Ok"
+    if t == "TxDone":
+        return "TxDone"
+    if t == "Config":
+        return f"Config {DIM}{resp.get('raw', '')}{RST}"
+    if t == "Error":
+        return f"{RED}Error (code {resp.get('code', '?')}){RST}"
+    return t
+
+
+def send_cmd(ser: serial.Serial, cmd: dict, label: str = "", quiet: bool = False) -> dict | None:
     payload = encode_command(cmd)
     frame = cobs_frame(payload)
-    print(f"{DIM}>>>{RST} {label}")
+    if not quiet:
+        print(f"  {DIM}>>>{RST} {label}")
     ser.write(frame)
     ser.flush()
     resp_data = read_frame(ser)
     if resp_data is None:
-        print(f"    {YEL}timeout{RST}")
+        if not quiet:
+            print(f"  {DIM}<<<{RST} {YEL}timeout{RST}")
         return None
     resp = decode_response(resp_data)
-    print(f"{DIM}<<<{RST} {resp}")
+    if not quiet:
+        print(f"  {DIM}<<<{RST} {_format_response(resp)}")
     return resp
 
 
@@ -971,7 +988,7 @@ def configure_and_listen(ser: serial.Serial):
     )
     send_cmd(ser, {"type": "StartRx"}, "StartRx")
 
-    print(f"\n{BWHT}Listening for packets{RST} {DIM}(Ctrl+C to stop){RST}\n")
+    print(f"\n  {BWHT}Listening{RST} {DIM}(Ctrl+C to stop){RST}\n")
     ser.timeout = 1
 
     last_activity = time.monotonic()
@@ -980,13 +997,13 @@ def configure_and_listen(ser: serial.Serial):
     while True:
         try:
             _aggregator.maybe_report(ser)
-        except Exception as e:
-            print(f"  {RED}[report error: {e}]{RST}")
+        except Exception:
+            pass
 
         # Auto-off display after idle timeout
         now = time.monotonic()
         if not display_off and now - last_activity > DISPLAY_IDLE_TIMEOUT:
-            send_cmd(ser, {"type": "DisplayOff"}, "DisplayOff (idle)")
+            send_cmd(ser, {"type": "DisplayOff"}, quiet=True)
             display_off = True
 
         data = read_frame(ser)
@@ -997,7 +1014,7 @@ def configure_and_listen(ser: serial.Serial):
             if resp["type"] == "RxPacket":
                 # Wake display on activity
                 if display_off:
-                    send_cmd(ser, {"type": "DisplayOn"}, "DisplayOn (activity)")
+                    send_cmd(ser, {"type": "DisplayOn"}, quiet=True)
                     display_off = False
                 last_activity = time.monotonic()
 
@@ -1005,17 +1022,15 @@ def configure_and_listen(ser: serial.Serial):
                 decoded = decode_meshcore_packet(payload)
                 rssi_snr = _format_rssi_snr(resp["rssi"], resp["snr"])
                 print(f"  {rssi_snr}  {DIM}len:{len(payload):3d}{RST}  {decoded}")
-            else:
-                print(f"  {DIM}{resp}{RST}")
-        except Exception as e:
-            print(f"  {RED}[decode error: {e}] raw={data.hex()}{RST}")
+        except Exception:
+            pass
 
 
 def main():
     _load_adverts()
     n = len(_known_nodes)
     if n:
-        print(f"{DIM}Loaded {n} known node(s) from {_ADVERT_FILE}{RST}")
+        print(f"  {DIM}Loaded {n} known node(s){RST}")
 
     port = sys.argv[1] if len(sys.argv) > 1 else None
 
@@ -1024,17 +1039,17 @@ def main():
             port = wait_for_device()
 
         try:
-            print(f"Opening {port}")
+            print(f"  {DIM}Opening{RST} {GRN}{port}{RST}")
             ser = open_serial(port)
             ser.reset_input_buffer()
             configure_and_listen(ser)
         except (serial.SerialException, ConnectionError, OSError) as e:
-            print(f"\n{RED}Disconnected: {e}{RST}")
-            print("Will reconnect when device reappears...")
+            print(f"\n  {RED}Disconnected: {e}{RST}")
+            print(f"  {DIM}Reconnecting when device reappears...{RST}")
             port = None
             time.sleep(1)
         except KeyboardInterrupt:
-            print(f"\n{DIM}Stopping...{RST}")
+            print()
             try:
                 ser.timeout = 2
                 send_cmd(ser, {"type": "StopRx"}, "StopRx")
