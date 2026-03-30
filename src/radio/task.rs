@@ -289,22 +289,24 @@ fn to_sf(sf: u8) -> lora_phy::mod_params::SpreadingFactor {
     match sf {
         5 => _5,
         6 => _6,
+        7 => _7,
         8 => _8,
         9 => _9,
         10 => _10,
         11 => _11,
         12 => _12,
-        _ => _7, // validated earlier, but safe default
+        _ => _7, // validated to 5-12 earlier; unreachable but safe
     }
 }
 
 fn to_cr(cr: u8) -> lora_phy::mod_params::CodingRate {
     use lora_phy::mod_params::CodingRate::*;
     match cr {
+        5 => _4_5,
         6 => _4_6,
         7 => _4_7,
         8 => _4_8,
-        _ => _4_5, // validated earlier, but safe default
+        _ => _4_5, // validated to 5-8 earlier; unreachable but safe
     }
 }
 
