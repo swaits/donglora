@@ -23,10 +23,9 @@ and gets out of the way. No mesh logic, no protocol opinions, no config files.
 
 ## Protocol
 
-DongLoRa speaks a binary protocol over USB CDC-ACM: COBS-framed
-[postcard](https://postcard.jamesmunns.com/) messages. 8 commands,
-6 response types — everything you need to configure the radio,
-transmit, and receive.
+DongLoRa speaks a binary protocol over USB CDC-ACM: COBS-framed,
+fixed-size little-endian messages. 8 commands, 6 response types —
+everything you need to configure the radio, transmit, and receive.
 
 See **[docs/PROTOCOL.md](docs/PROTOCOL.md)** for the complete wire format
 specification with worked examples.

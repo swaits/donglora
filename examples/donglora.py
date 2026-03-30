@@ -1,7 +1,7 @@
 """DongLoRa host library — connect, configure, send/receive LoRa packets.
 
 This is a minimal helper for the example scripts. It implements the
-DongLoRa USB protocol (COBS-framed postcard) just enough to be useful.
+DongLoRa USB protocol (COBS-framed fixed-size LE) just enough to be useful.
 See docs/PROTOCOL.md for the full specification.
 """
 # /// script

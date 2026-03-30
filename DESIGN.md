@@ -97,8 +97,8 @@ keep, but never prematurely.
 
 | Decision | Choice | Why |
 |---|---|---|
-| USB framing | COBS + postcard | Compact, `no_std` native, battle-tested |
-| Serialization | postcard + serde | Zero-alloc binary codec, perfect for embedded |
+| USB framing | COBS | Compact, `no_std`, zero-overhead frame delimiting |
+| Serialization | Fixed-size LE | Every field at a known offset. No varints, no surprises |
 | Async runtime | Embassy | De facto standard for async embedded Rust |
 | Display | Radio status dashboard | Freq, BW, SF, packet counts, RSSI/SNR |
 | Boot behavior | Idle until host commands | Host-driven principle |

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Transparent LoRa radio over USB CDC-ACM (VID `1209`, PID `5741`)
-- COBS-framed postcard binary protocol (8 commands, 6 responses)
+- COBS-framed fixed-size LE binary protocol (8 commands, 6 responses)
 - Radio configuration: frequency, bandwidth, spreading factor, coding rate, TX power
 - Continuous RX mode with RSSI/SNR per packet
 - Single-shot TX with optional per-packet config override
