@@ -5,3 +5,5 @@ src/board/mod.rs
 __pycache__/
 .hypothesis/
 examples/meshcore/corpus/generated/
+crates/donglora-cobs/fuzz/corpus/
+crates/donglora-cobs/fuzz/artifacts/

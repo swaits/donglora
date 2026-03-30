@@ -486,3 +486,72 @@ mod tests {
         }
     }
 }
+
+// ── Property-based tests (proptest) ─────────────────────────────
+
+#[cfg(test)]
+mod proptests {
+    extern crate alloc;
+    use alloc::vec;
+    use alloc::vec::Vec;
+    use super::*;
+    use proptest::prelude::*;
+
+    // Round-trip: encode then decode must recover the original.
+    proptest! {
+        #[test]
+        fn roundtrip_any(data in proptest::collection::vec(any::<u8>(), 0..1024)) {
+            let mut enc_buf = vec![0u8; max_encoded_len(data.len()) + 1];
+            let enc_len = encode(&data, &mut enc_buf).unwrap();
+            let encoded = &enc_buf[..enc_len];
+
+            // Encoded output must never contain 0x00.
+            prop_assert!(!encoded.contains(&0x00));
+
+            let mut dec_buf = vec![0u8; data.len() + 1];
+            let dec_len = decode(encoded, &mut dec_buf).unwrap();
+            prop_assert_eq!(&dec_buf[..dec_len], &data[..]);
+        }
+
+        // Our encode → corncobs decode must match.
+        #[test]
+        fn interop_our_encode_their_decode(data in proptest::collection::vec(any::<u8>(), 0..1024)) {
+            let mut enc_buf = vec![0u8; max_encoded_len(data.len()) + 2];
+            let enc_len = encode(&data, &mut enc_buf).unwrap();
+            // Append sentinel for corncobs.
+            enc_buf[enc_len] = 0x00;
+
+            let mut dec_buf = vec![0u8; data.len() + 1];
+            let dec_len = corncobs::decode_buf(&enc_buf[..enc_len + 1], &mut dec_buf).unwrap();
+            prop_assert_eq!(&dec_buf[..dec_len], &data[..]);
+        }
+
+        // corncobs encode → our decode must match.
+        #[test]
+        fn interop_their_encode_our_decode(data in proptest::collection::vec(any::<u8>(), 0..1024)) {
+            let mut enc_buf = vec![0u8; corncobs::max_encoded_len(data.len())];
+            let enc_len = corncobs::encode_buf(&data, &mut enc_buf);
+            // Strip trailing sentinel for our decoder.
+            let data_end = enc_buf[..enc_len].iter().rposition(|&b| b != 0x00).map_or(0, |i| i + 1);
+
+            let mut dec_buf = vec![0u8; data.len() + 1];
+            let dec_len = decode(&enc_buf[..data_end], &mut dec_buf).unwrap();
+            prop_assert_eq!(&dec_buf[..dec_len], &data[..]);
+        }
+
+        // Encoded length is always within the theoretical maximum.
+        #[test]
+        fn encoded_length_bounded(data in proptest::collection::vec(any::<u8>(), 0..1024)) {
+            let mut enc_buf = vec![0u8; max_encoded_len(data.len()) + 1];
+            let enc_len = encode(&data, &mut enc_buf).unwrap();
+            prop_assert!(enc_len <= max_encoded_len(data.len()));
+        }
+
+        // Decoding random garbage must never panic (returns None on invalid input).
+        #[test]
+        fn decode_never_panics(data in proptest::collection::vec(any::<u8>(), 0..512)) {
+            let mut dec_buf = vec![0u8; data.len() + 256];
+            let _ = decode(&data, &mut dec_buf); // may return None, must not panic
+        }
+    }
+}
