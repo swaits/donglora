@@ -125,6 +125,11 @@ def decode_response(data: bytes) -> dict:
     if tag == 0:
         return {"type": "Pong"}
     elif tag == 1:
+        if len(rest) >= 10:
+            freq_hz, bw, sf, cr, sync_word, pwr = struct.unpack_from("<IBBBHB", rest, 0)
+            tx_power_dbm = struct.unpack_from("<b", rest, 9)[0]
+            return {"type": "Config", "freq_hz": freq_hz, "bw": bw, "sf": sf,
+                    "cr": cr, "sync_word": sync_word, "tx_power_dbm": tx_power_dbm}
         return {"type": "Config", "raw": rest.hex()}
     elif tag == 2:
         rssi = struct.unpack_from("<h", rest, 0)[0]

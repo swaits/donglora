@@ -36,6 +36,7 @@ All examples use [uv](https://docs.astral.sh/uv/) for dependency management:
 
 | Script | Description |
 |--------|-------------|
+| [`all_commands.py`](examples/all_commands.py) | Exercise all 8 commands (Ping, SetConfig, GetConfig, StartRx, StopRx, Transmit, DisplayOn/Off) |
 | [`simple_rx.py`](examples/simple_rx.py) | Configure radio, receive and print packets |
 | [`simple_tx.py`](examples/simple_tx.py) | Transmit a single packet |
 | [`ping_pong.py`](examples/ping_pong.py) | Two-dongle demo (`--role tx` / `--role rx`) |
