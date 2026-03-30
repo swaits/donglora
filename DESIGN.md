@@ -51,7 +51,11 @@ radio — it just gives you clean access to it.
     board, and even some uncommon ones. The architecture is designed to accommodate
     them cleanly. If the code isn't structured for a new board, fix the code.
 
-11. **Standard toolchain.** No custom Rust forks or special SDKs. Use stock `rustup`
+11. **Minimal overhead.** The dongle should add as little latency as possible
+    between the radio and the host. No unnecessary copies, no blocking operations
+    in the radio path, no computation that isn't strictly needed.
+
+12. **Standard toolchain.** No custom Rust forks or special SDKs. Use stock `rustup`
     channels (stable, nightly). Xtensa targets use nightly + `-Zbuild-std`; Cortex-M
     and RISC-V targets use stable. Boards that need the `esp` toolchain (via `espup`)
     are supported but gracefully skipped when the toolchain isn't installed.
@@ -60,7 +64,7 @@ radio — it just gives you clean access to it.
 
 ```
 Host PC
-  │ USB CDC-ACM (COBS-framed postcard)
+  │ USB CDC-ACM (COBS-framed fixed-size LE)
   ▼
 usb_task ──Command──► radio_task ──► SX1262
          ◄──Response──     │

@@ -116,7 +116,7 @@ config = struct.pack("<IBBBHB",
 command = b"\x02" + config  # tag 2 = SetConfig
 ```
 
-Raw bytes: `02 00 93 87 36 07 07 05 24 14 80`
+Raw bytes: `02 C0 CA 89 36 07 07 05 24 14 80`
 
 ### 2. COBS-encode and send
 
