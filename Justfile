@@ -74,9 +74,9 @@ _cargo board cmd extra_args="":
     case "$target" in xtensa-*) \
         just _require_esp_toolchain; \
         [ -f "$HOME/export-esp.sh" ] && . "$HOME/export-esp.sh"; \
-        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly";; \
+        env="RUSTC=$(rustup which rustc --toolchain esp)"; extra="+nightly"; buildstd="-Zbuild-std=core,alloc";; \
     esac; \
-    eval $env cargo $extra {{cmd}} --target "$target" --features "$feat" {{extra_args}}
+    eval $env cargo $extra {{cmd}} --target "$target" --features "$feat" $buildstd {{extra_args}}
 
 # Check if a board's toolchain is available (silent, for build-all/check-all skipping)
 [private]

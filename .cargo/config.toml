@@ -4,6 +4,3 @@ rustflags = [
     "-C", "link-arg=-Wl,-Tdefmt.x",
     "-C", "link-arg=-nostartfiles",
 ]
-
-[unstable]
-build-std = ["alloc", "core"]
