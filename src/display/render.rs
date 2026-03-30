@@ -150,20 +150,18 @@ pub fn dashboard(
             rssi_sparkline(target, rssi_history, tx_history, rssi_count);
         }
         None => {
-            // Row 1: "DongLoRa" in bold
+            // Row 1: "DongLoRa" bold left, version small right
             let title_style = MonoTextStyle::new(&FONT_9X15_BOLD, BinaryColor::On);
-            Text::with_alignment(
-                "DongLoRa",
-                Point::new(W / 2, 15),
-                title_style,
-                Alignment::Center,
-            )
-            .draw(target)
-            .ok();
-            // Row 2: "Board Name v0.1.0"
+            Text::new("DongLoRa", Point::new(4, 15), title_style)
+                .draw(target)
+                .ok();
             buf.clear();
-            let _ = write!(buf, "{} v{}", board.name, board.version);
-            Text::with_alignment(&buf, Point::new(W / 2, 28), style, Alignment::Center)
+            let _ = write!(buf, "v{}", board.version);
+            Text::with_alignment(&buf, Point::new(W - 2, 15), style, Alignment::Right)
+                .draw(target)
+                .ok();
+            // Row 2: board name
+            Text::with_alignment(board.name, Point::new(W / 2, 28), style, Alignment::Center)
                 .draw(target)
                 .ok();
             // Row 3: MAC address
