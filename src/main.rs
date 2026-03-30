@@ -60,10 +60,16 @@ async fn run(spawner: Spawner) {
 
     let has_display = display.is_some();
 
-    spawner.spawn(radio::radio_task(radio, &COMMANDS, &RESPONSES, &STATUS)).unwrap();
-    spawner.spawn(usb::usb_task(usb, &COMMANDS, &RESPONSES, &DISPLAY_COMMANDS, has_display)).unwrap();
+    spawner
+        .spawn(radio::radio_task(radio, &COMMANDS, &RESPONSES, &STATUS))
+        .expect("spawn radio_task");
+    spawner
+        .spawn(usb::usb_task(usb, &COMMANDS, &RESPONSES, &DISPLAY_COMMANDS, has_display))
+        .expect("spawn usb_task");
 
     if let Some(dp) = display {
-        spawner.spawn(display::display_task(dp, &STATUS, &DISPLAY_COMMANDS)).unwrap();
+        spawner
+            .spawn(display::display_task(dp, &STATUS, &DISPLAY_COMMANDS))
+            .expect("spawn display_task");
     }
 }
