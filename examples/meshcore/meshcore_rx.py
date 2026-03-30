@@ -77,6 +77,7 @@ def _snr_color(snr: int) -> str:
 
 # ── MeshCore channel crypto ────────────────────────────────────────
 
+
 def _channel_secret_from_hashtag(name: str) -> bytes:
     """Derive 32-byte secret from a hashtag channel name (e.g., '#test')."""
     h = hashlib.sha256(name.encode()).digest()
@@ -96,7 +97,9 @@ def _channel_hash(secret: bytes) -> int:
     return hashlib.sha256(secret[:key_len]).digest()[0]
 
 
-def _grp_verify_and_decrypt(secret: bytes, mac_bytes: bytes, ciphertext: bytes) -> bytes | None:
+def _grp_verify_and_decrypt(
+    secret: bytes, mac_bytes: bytes, ciphertext: bytes
+) -> bytes | None:
     """Verify MAC then decrypt a GRP_TXT/GRP_DATA payload. Returns plaintext or None."""
     if not ciphertext or len(ciphertext) % 16 != 0:
         return None
@@ -109,7 +112,7 @@ def _grp_verify_and_decrypt(secret: bytes, mac_bytes: bytes, ciphertext: bytes) 
     cipher = AES.new(secret[:16], AES.MODE_ECB)
     plaintext = b""
     for i in range(0, len(ciphertext), 16):
-        plaintext += cipher.decrypt(ciphertext[i:i + 16])
+        plaintext += cipher.decrypt(ciphertext[i : i + 16])
     return plaintext
 
 
@@ -179,7 +182,7 @@ def _grp_encrypt(secret: bytes, sender: str, text: str) -> bytes:
     cipher = AES.new(secret[:16], AES.MODE_ECB)
     ciphertext = b""
     for i in range(0, len(plaintext), 16):
-        ciphertext += cipher.encrypt(plaintext[i:i + 16])
+        ciphertext += cipher.encrypt(plaintext[i : i + 16])
     # HMAC-SHA256 over ciphertext, truncated to 2 bytes
     key_len = 16 if secret[16:] == b"\x00" * 16 else 32
     mac = hmac.new(secret[:key_len], ciphertext, hashlib.sha256).digest()[:2]
@@ -201,8 +204,9 @@ def _grp_transmit(ser, channel_name: str, sender: str, text: str):
     payload = _grp_encrypt(secret, sender, text)
     packet = _grp_build_packet(payload)
     try:
-        send_cmd(ser, {"type": "Transmit", "payload": packet},
-                 f"TX GRP_TXT → {channel_name}")
+        send_cmd(
+            ser, {"type": "Transmit", "payload": packet}, f"TX GRP_TXT → {channel_name}"
+        )
     except Exception as e:
         print(f"  {RED}[TX failed: {e}]{RST}")
     # Always try to resume RX, even if TX failed
@@ -216,13 +220,13 @@ def _grp_transmit(ser, channel_name: str, sender: str, text: str):
 
 REPORT_CHANNEL = "#watchman"
 REPORT_SENDER = "Watchman"
-REPORT_WINDOW = 60       # seconds — collect events before reporting
-REPORT_COOLDOWN = 3600   # seconds — suppress repeat reports for same issue
+REPORT_WINDOW = 60  # seconds — collect events before reporting
+REPORT_COOLDOWN = 3600  # seconds — suppress repeat reports for same issue
 
 
 def _nodes_for_hash(hash_hex: str, hash_size: int) -> int:
     """Count how many known nodes share this path hash."""
-    return sum(1 for pk in _known_nodes if pk[:hash_size * 2] == hash_hex)
+    return sum(1 for pk in _known_nodes if pk[: hash_size * 2] == hash_hex)
 
 
 class LoopAggregator:
@@ -234,10 +238,14 @@ class LoopAggregator:
     def record(self, dupes: dict[str, int], hash_size: int, all_hops: list[str]):
         """Record duplicate hops from one packet."""
         first_hop = all_hops[0] if all_hops else None
-        self._pending.append({
-            "dupes": dupes, "hash_size": hash_size, "hops": all_hops,
-            "first_hop": first_hop,
-        })
+        self._pending.append(
+            {
+                "dupes": dupes,
+                "hash_size": hash_size,
+                "hops": all_hops,
+                "first_hop": first_hop,
+            }
+        )
 
     def maybe_report(self, ser) -> bool:
         if not self._pending:
@@ -268,7 +276,10 @@ class LoopAggregator:
 
         for (h, hs), info in agg.items():
             issue_key = f"{h}:{hs}"
-            if issue_key in self._cooldown and now - self._cooldown[issue_key] < REPORT_COOLDOWN:
+            if (
+                issue_key in self._cooldown
+                and now - self._cooldown[issue_key] < REPORT_COOLDOWN
+            ):
                 continue
 
             n_known = _nodes_for_hash(h, hs)
@@ -290,8 +301,10 @@ class LoopAggregator:
             elif hs >= 2:
                 if n_known > 1:
                     # 2B+ hash collision — rare, definitely a routing issue
-                    msg = (f"Routing conflict: {n_known} nodes share {hs}B "
-                           f"hash {h} ({pkts} pkt).")
+                    msg = (
+                        f"Routing conflict: {n_known} nodes share {hs}B "
+                        f"hash {h} ({pkts} pkt)."
+                    )
                     messages.append(msg)
                 else:
                     # 2B+ duplicate, unknown node → almost certainly a loop
@@ -302,13 +315,17 @@ class LoopAggregator:
             else:
                 # 1B hash — can't distinguish loop from collision
                 if n_known > 1:
-                    msg = (f"1B hash {h} duplicated in {pkts} pkt "
-                           f"({n_known} known nodes share it). "
-                           f"Sender {sender_str}: use 2B routing!")
+                    msg = (
+                        f"1B hash {h} duplicated in {pkts} pkt "
+                        f"({n_known} known nodes share it). "
+                        f"Sender {sender_str}: use 2B routing!"
+                    )
                     messages.append(msg)
                 else:
-                    msg = (f"1B hash {h} duplicated in {pkts} pkt. "
-                           f"Sender {sender_str}: use 2B routing to clarify!")
+                    msg = (
+                        f"1B hash {h} duplicated in {pkts} pkt. "
+                        f"Sender {sender_str}: use 2B routing to clarify!"
+                    )
                     messages.append(msg)
 
             self._cooldown[issue_key] = now
@@ -320,7 +337,7 @@ class LoopAggregator:
         full = " | ".join(messages)
         max_len = MAX_GRP_TEXT - len(REPORT_SENDER) - 2
         if len(full) > max_len:
-            full = full[:max_len - 5] + "+more"
+            full = full[: max_len - 5] + "+more"
 
         print(f"  {BYEL}>>> Reporting to {REPORT_CHANNEL}: {full}{RST}")
         _grp_transmit(ser, REPORT_CHANNEL, REPORT_SENDER, full)
@@ -414,7 +431,8 @@ def read_frame(ser: serial.Serial) -> bytes | None:
 
 def encode_radio_config(cfg: dict) -> bytes:
     """Encode RadioConfig to 10 fixed-size LE bytes."""
-    return struct.pack("<IBBBHB",
+    return struct.pack(
+        "<IBBBHB",
         cfg["freq_hz"],
         cfg["bw"],
         cfg["sf"],
@@ -428,8 +446,14 @@ def encode_command(cmd: dict) -> bytes:
     """Encode a command dict to fixed-size LE bytes."""
     kind = cmd["type"]
     tags = {
-        "Ping": 0, "GetConfig": 1, "SetConfig": 2, "StartRx": 3,
-        "StopRx": 4, "Transmit": 5, "DisplayOn": 6, "DisplayOff": 7,
+        "Ping": 0,
+        "GetConfig": 1,
+        "SetConfig": 2,
+        "StartRx": 3,
+        "StopRx": 4,
+        "Transmit": 5,
+        "DisplayOn": 6,
+        "DisplayOff": 7,
     }
     out = bytes([tags[kind]])
     if kind == "SetConfig":
@@ -459,7 +483,7 @@ def decode_response(data: bytes) -> dict:
         rssi = struct.unpack_from("<h", rest, 0)[0]
         snr = struct.unpack_from("<h", rest, 2)[0]
         plen = struct.unpack_from("<H", rest, 4)[0]
-        payload = rest[6:6 + plen]
+        payload = rest[6 : 6 + plen]
         return {"type": "RxPacket", "rssi": rssi, "snr": snr, "payload": payload}
     elif tag == 3:
         return {"type": "TxDone"}
@@ -529,8 +553,9 @@ def _save_adverts():
 def _lookup_hash(hash_hex: str, hash_size: int) -> list[str]:
     """Find node names whose pubkey prefix matches a path hash."""
     return [
-        v["name"] for pk_hex, v in _known_nodes.items()
-        if pk_hex[:hash_size * 2] == hash_hex
+        v["name"]
+        for pk_hex, v in _known_nodes.items()
+        if pk_hex[: hash_size * 2] == hash_hex
     ]
 
 
@@ -632,16 +657,25 @@ def _detect_loops(hops: list[str], hash_size: int) -> str | None:
         else:
             # 1B hash — ambiguous: could be loop or collision
             if n_known > 1:
-                parts.append(f"{YEL}{h} x{c} {DIM}(loop or collision? {n_known} nodes share this 1B hash){RST}")
+                parts.append(
+                    f"{YEL}{h} x{c} {DIM}(loop or collision? {n_known} nodes share this 1B hash){RST}"
+                )
             else:
                 parts.append(f"{YEL}{h} x{c} {DIM}(loop or collision? 1B hash){RST}")
 
     return f"{LOOP_INDENT}\u26a0 {', '.join(parts)}"
 
 
-def _try_decode_body(data: bytes, pos: int, type_name: str, type_color: str,
-                     payload_type: int, payload_ver: int, route_name: str,
-                     tc_str: str) -> str | None:
+def _try_decode_body(
+    data: bytes,
+    pos: int,
+    type_name: str,
+    type_color: str,
+    payload_type: int,
+    payload_ver: int,
+    route_name: str,
+    tc_str: str,
+) -> str | None:
     """Try to parse path + payload starting at pos. Returns decoded string or None."""
     if pos >= len(data):
         return None
@@ -710,8 +744,10 @@ def decode_meshcore_packet(data: bytes) -> str:
     if payload_ver != 0:
         route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
         type_name = PAYLOAD_NAMES.get(payload_type, f"0x{payload_type:02x}")
-        return (f"{RED}<not meshcore>{RST} {DIM}hdr=0x{header:02x} "
-                f"(ver={payload_ver} — only v0 exists) {data[1:].hex()}{RST}")
+        return (
+            f"{RED}<not meshcore>{RST} {DIM}hdr=0x{header:02x} "
+            f"(ver={payload_ver} — only v0 exists) {data[1:].hex()}{RST}"
+        )
 
     route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
     type_name = PAYLOAD_NAMES.get(payload_type, f"0x{payload_type:02x}")
@@ -723,24 +759,36 @@ def decode_meshcore_packet(data: bytes) -> str:
     if has_tc and len(data) >= 6:
         tc1, tc2 = struct.unpack_from("<HH", data, 1)
         tc_str = f" {DIM}tc={tc1:04x}:{tc2:04x}{RST}"
-        result = _try_decode_body(data, 5, type_name, type_color,
-                                  payload_type, payload_ver, route_name, tc_str)
+        result = _try_decode_body(
+            data,
+            5,
+            type_name,
+            type_color,
+            payload_type,
+            payload_ver,
+            route_name,
+            tc_str,
+        )
         if result is not None:
             return result
         # TC parse failed — retry without (older firmware compatibility)
-        result = _try_decode_body(data, 1, type_name, type_color,
-                                  payload_type, payload_ver, route_name, "")
+        result = _try_decode_body(
+            data, 1, type_name, type_color, payload_type, payload_ver, route_name, ""
+        )
         if result is not None:
             return result
     else:
-        result = _try_decode_body(data, 1, type_name, type_color,
-                                  payload_type, payload_ver, route_name, "")
+        result = _try_decode_body(
+            data, 1, type_name, type_color, payload_type, payload_ver, route_name, ""
+        )
         if result is not None:
             return result
 
     # Both attempts failed — show what we know from the header
-    return (f"{RED}<bad framing>{RST} {type_color}{type_name}{RST} "
-            f"{route_name} {DIM}{data[1:].hex()}{RST}")
+    return (
+        f"{RED}<bad framing>{RST} {type_color}{type_name}{RST} "
+        f"{route_name} {DIM}{data[1:].hex()}{RST}"
+    )
 
 
 def _decode_advert(prefix: str, payload: bytes) -> str:
@@ -750,7 +798,9 @@ def _decode_advert(prefix: str, payload: bytes) -> str:
     timestamp = struct.unpack_from("<I", payload, 32)[0]
     app_data = payload[100:]
     try:
-        ts = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        ts = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
     except (OSError, OverflowError, ValueError):
         ts = f"epoch={timestamp}"
     app_str, name = _decode_advert_appdata(app_data)
@@ -760,7 +810,9 @@ def _decode_advert(prefix: str, payload: bytes) -> str:
 
 def _decode_ack(prefix: str, payload: bytes) -> str:
     if len(payload) < 4:
-        return f"{prefix} {RED}<bad ack: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        return (
+            f"{prefix} {RED}<bad ack: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        )
     crc = struct.unpack_from("<I", payload, 0)[0]
     return f"{prefix} {DIM}crc={RST}0x{crc:08x}"
 
@@ -777,7 +829,9 @@ def _decode_encrypted_peer(prefix: str, type_name: str, payload: bytes) -> str:
 
 def _decode_encrypted_group(prefix: str, payload: bytes) -> str:
     if len(payload) < 3:
-        return f"{prefix} {RED}<bad group: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        return (
+            f"{prefix} {RED}<bad group: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        )
     ch = payload[0]
     mac_bytes = payload[1:3]
     ciphertext = payload[3:]
@@ -791,18 +845,25 @@ def _decode_encrypted_group(prefix: str, payload: bytes) -> str:
             if parsed:
                 ts, text = parsed
                 try:
-                    ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%H:%M:%S")
+                    ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime(
+                        "%H:%M:%S"
+                    )
                 except (OSError, OverflowError, ValueError):
                     ts_str = f"epoch={ts}"
-                return (f"{prefix} {BGRN}{chan_name}{RST} "
-                        f"{DIM}ts={RST}{ts_str}Z {BWHT}{text}{RST}")
+                return (
+                    f"{prefix} {BGRN}{chan_name}{RST} "
+                    f"{DIM}ts={RST}{ts_str}Z {BWHT}{text}{RST}"
+                )
             # MAC matched but plaintext unparseable
-            return (f"{prefix} {BGRN}{chan_name}{RST} "
-                    f"{DIM}[decrypted but unparseable]{RST}")
+            return (
+                f"{prefix} {BGRN}{chan_name}{RST} {DIM}[decrypted but unparseable]{RST}"
+            )
 
     # No known channel matched — show raw info
-    return (f"{prefix} {DIM}ch={RST}{ch:02x} {DIM}mac={RST}{mac_bytes.hex()} "
-            f"{DIM}[{len(ciphertext)}B]{RST}")
+    return (
+        f"{prefix} {DIM}ch={RST}{ch:02x} {DIM}mac={RST}{mac_bytes.hex()} "
+        f"{DIM}[{len(ciphertext)}B]{RST}"
+    )
 
 
 def _decode_anon_req(prefix: str, payload: bytes) -> str:
@@ -817,7 +878,9 @@ def _decode_anon_req(prefix: str, payload: bytes) -> str:
 
 def _decode_trace(prefix: str, payload: bytes) -> str:
     if len(payload) < 9:
-        return f"{prefix} {RED}<bad trace: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        return (
+            f"{prefix} {RED}<bad trace: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
+        )
     tag = struct.unpack_from("<I", payload, 0)[0]
     flags = payload[8]
     trace_hash_size = (flags & 0x03) + 1
@@ -896,12 +959,16 @@ def _format_rssi_snr(rssi: int, snr: int) -> str:
     return line
 
 
-DISPLAY_IDLE_TIMEOUT = 60  # seconds — turn display off when no activity
+DISPLAY_IDLE_TIMEOUT = 90  # seconds — turn display off when no activity
 
 
 def configure_and_listen(ser: serial.Serial):
     send_cmd(ser, {"type": "Ping"}, "Ping")
-    send_cmd(ser, {"type": "SetConfig", "config": RADIO_CONFIG}, "SetConfig 910.525/62.5k/SF7/CR4/5")
+    send_cmd(
+        ser,
+        {"type": "SetConfig", "config": RADIO_CONFIG},
+        "SetConfig 910.525/62.5k/SF7/CR4/5",
+    )
     send_cmd(ser, {"type": "StartRx"}, "StartRx")
 
     print(f"\n{BWHT}Listening for packets{RST} {DIM}(Ctrl+C to stop){RST}\n")
@@ -937,11 +1004,7 @@ def configure_and_listen(ser: serial.Serial):
                 payload = resp["payload"]
                 decoded = decode_meshcore_packet(payload)
                 rssi_snr = _format_rssi_snr(resp["rssi"], resp["snr"])
-                print(
-                    f"  {rssi_snr}  "
-                    f"{DIM}len:{len(payload):3d}{RST}  "
-                    f"{decoded}"
-                )
+                print(f"  {rssi_snr}  {DIM}len:{len(payload):3d}{RST}  {decoded}")
             else:
                 print(f"  {DIM}{resp}{RST}")
         except Exception as e:
