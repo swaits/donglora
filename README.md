@@ -40,6 +40,7 @@ All examples use [uv](https://docs.astral.sh/uv/) for dependency management:
 | [`simple_rx.py`](examples/simple_rx.py) | Configure radio, receive and print packets |
 | [`simple_tx.py`](examples/simple_tx.py) | Transmit a single packet |
 | [`ping_pong.py`](examples/ping_pong.py) | Two-dongle demo (`--role tx` / `--role rx`) |
+| [`lora_bridge.py`](examples/lora_bridge.py) | Two-way LoRa bridge over TCP (works over Tailscale, WireGuard, etc.) |
 | [`meshcore/`](examples/meshcore/) | Full MeshCore packet decoder (advanced example) |
 
 ## Building
