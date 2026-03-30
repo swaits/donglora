@@ -113,7 +113,7 @@ _require_esp_toolchain:
         echo "error: ESP toolchain not found" >&2; \
         echo "  install:" >&2; \
         echo "    cargo install espup" >&2; \
-        echo "    espup install --toolchain-version 1.82.0.3" >&2; \
+        echo "    espup install" >&2; \
         exit 1; \
     fi
 

@@ -1,6 +1,5 @@
 use embassy_embedded_hal::shared_bus::asynch::spi::SpiDevice;
-use embassy_nrf::gpio::{AnyPin, Input, Level, Output, OutputDrive, Pull};
-use embassy_nrf::peripherals::USBD;
+use embassy_nrf::gpio::{Input, Level, Output, OutputDrive, Pull};
 use embassy_nrf::spim::{self, Spim};
 use embassy_nrf::twim::{self, Twim};
 use embassy_nrf::usb::Driver;
@@ -15,14 +14,14 @@ use lora_phy::sx126x::{self, Sx1262, Sx126x};
 use super::traits::LoRaBoard;
 
 bind_interrupts!(struct Irqs {
-    USBD => embassy_nrf::usb::InterruptHandler<USBD>;
+    USBD => embassy_nrf::usb::InterruptHandler<embassy_nrf::peripherals::USBD>;
     SPIM3 => embassy_nrf::spim::InterruptHandler<embassy_nrf::peripherals::SPI3>;
-    SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0 => embassy_nrf::twim::InterruptHandler<embassy_nrf::peripherals::TWISPI0>;
+    TWISPI0 => embassy_nrf::twim::InterruptHandler<embassy_nrf::peripherals::TWISPI0>;
 });
 
 // ── Concrete peripheral types ────────────────────────────────────────
 
-type SpiBus = Spim<'static, embassy_nrf::peripherals::SPI3>;
+type SpiBus = Spim<'static>;
 type Nss = Output<'static>;
 type Iv = GenericSx126xInterfaceVariant<Output<'static>, Input<'static>>;
 type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
@@ -30,10 +29,10 @@ type RadioSpiDevice = SpiDevice<'static, NoopRawMutex, SpiBus, Nss>;
 pub type RadioDriver = Sx126x<RadioSpiDevice, Iv, Sx1262>;
 
 /// USB driver for CDC-ACM.
-pub type UsbDriver = Driver<'static, USBD, &'static embassy_nrf::usb::vbus_detect::SoftwareVbusDetect>;
+pub type UsbDriver = Driver<'static, &'static embassy_nrf::usb::vbus_detect::SoftwareVbusDetect>;
 
 /// I2C bus for an optional SSD1306 OLED.
-pub type DisplayI2c = Twim<'static, embassy_nrf::peripherals::TWISPI0>;
+pub type DisplayI2c = Twim<'static>;
 
 // ── Peripheral bundles ───────────────────────────────────────────────
 
@@ -97,13 +96,13 @@ impl Board {
             StaticCell::new();
         let spi_bus = SPI_BUS.init(embassy_sync::mutex::Mutex::new(spi));
 
-        let nss = Output::new(AnyPin::from(p.P1_10), Level::High, OutputDrive::Standard);
+        let nss = Output::new(p.P1_10, Level::High, OutputDrive::Standard);
         let spi_device = SpiDevice::new(spi_bus, nss);
 
         // ── SX1262 control pins ──────────────────────────────────
-        let reset = Output::new(AnyPin::from(p.P1_06), Level::High, OutputDrive::Standard);
-        let dio1 = Input::new(AnyPin::from(p.P1_15), Pull::Down);
-        let busy = Input::new(AnyPin::from(p.P1_14), Pull::Down);
+        let reset = Output::new(p.P1_06, Level::High, OutputDrive::Standard);
+        let dio1 = Input::new(p.P1_15, Pull::Down);
+        let busy = Input::new(p.P1_14, Pull::Down);
 
         let iv = GenericSx126xInterfaceVariant::new(reset, dio1, busy, None, None).expect("SX1262 interface init");
 
@@ -130,8 +129,10 @@ impl Board {
         // ── Display (optional RAK1921 SSD1306 OLED on I2C) ──────
         // Always provide the I2C bus; display_task detects presence
         // via SSD1306 init (fails gracefully if no display attached).
+        static TWIM_BUF: StaticCell<[u8; 256]> = StaticCell::new();
+        let twim_buf = TWIM_BUF.init([0u8; 256]);
         let i2c_cfg = twim::Config::default();
-        let i2c = Twim::new(p.TWISPI0, Irqs, p.P0_13, p.P0_14, i2c_cfg);
+        let i2c = Twim::new(p.TWISPI0, Irqs, p.P0_13, p.P0_14, i2c_cfg, twim_buf);
         let mac = Self::mac_address();
         let display = Some(DisplayParts { i2c, mac });
 

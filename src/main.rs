@@ -48,7 +48,7 @@ cfg_if::cfg_if! {
             run(spawner).await;
         }
     } else if #[cfg(any(feature = "heltec_v3", feature = "heltec_v4"))] {
-        #[esp_hal_embassy::main]
+        #[esp_rtos::main]
         async fn main(spawner: Spawner) {
             run(spawner).await;
         }
