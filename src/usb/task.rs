@@ -34,7 +34,10 @@ pub async fn usb_task(
     display_commands: &'static DisplayCommandChannel,
     has_display: bool,
 ) {
-    // ── Build embassy-usb device with CDC-ACM class ────────────────
+    // ── USB device configuration ────────────────────────────────────
+    // VID 0x1209: pid.codes open-source USB vendor ID
+    // PID 0x5741: DongLoRa product ID
+    // Class 0xEF/0x02/0x01: Miscellaneous / Interface Association Descriptor
     let mut config = embassy_usb::Config::new(0x1209, 0x5741);
     config.manufacturer = Some("DongLoRa");
     config.product = Some("DongLoRa LoRa Radio");
