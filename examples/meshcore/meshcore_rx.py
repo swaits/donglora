@@ -896,6 +896,9 @@ def _format_rssi_snr(rssi: int, snr: int) -> str:
     return line
 
 
+DISPLAY_IDLE_TIMEOUT = 60  # seconds — turn display off when no activity
+
+
 def configure_and_listen(ser: serial.Serial):
     send_cmd(ser, {"type": "Ping"}, "Ping")
     send_cmd(ser, {"type": "SetConfig", "config": RADIO_CONFIG}, "SetConfig 910.525/62.5k/SF7/CR4/5")
@@ -904,11 +907,20 @@ def configure_and_listen(ser: serial.Serial):
     print(f"\n{BWHT}Listening for packets{RST} {DIM}(Ctrl+C to stop){RST}\n")
     ser.timeout = 1
 
+    last_activity = time.monotonic()
+    display_off = False
+
     while True:
         try:
             _aggregator.maybe_report(ser)
         except Exception as e:
             print(f"  {RED}[report error: {e}]{RST}")
+
+        # Auto-off display after idle timeout
+        now = time.monotonic()
+        if not display_off and now - last_activity > DISPLAY_IDLE_TIMEOUT:
+            send_cmd(ser, {"type": "DisplayOff"}, "DisplayOff (idle)")
+            display_off = True
 
         data = read_frame(ser)
         if data is None:
@@ -916,6 +928,12 @@ def configure_and_listen(ser: serial.Serial):
         try:
             resp = decode_response(data)
             if resp["type"] == "RxPacket":
+                # Wake display on activity
+                if display_off:
+                    send_cmd(ser, {"type": "DisplayOn"}, "DisplayOn (activity)")
+                    display_off = False
+                last_activity = time.monotonic()
+
                 payload = resp["payload"]
                 decoded = decode_meshcore_packet(payload)
                 rssi_snr = _format_rssi_snr(resp["rssi"], resp["snr"])
