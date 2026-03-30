@@ -7,7 +7,9 @@ use ssd1306::size::DisplaySize128x64;
 use ssd1306::{I2CDisplayInterface, Ssd1306Async};
 
 use crate::board::DisplayParts;
-use crate::channel::{DisplayCommand, DisplayCommandChannel, RadioStatus, StatusWatch};
+use crate::channel::{
+    DisplayCommand, DisplayCommandChannel, RadioState, RadioStatus, StatusWatch,
+};
 
 use crate::board::{Board, LoRaBoard};
 
@@ -15,7 +17,7 @@ use super::render::{self, RSSI_HISTORY_LEN};
 
 const BOARD_NAME: &str = Board::NAME;
 
-/// Duration per sparkline slot. 64 slots * 1s = ~1 minute of history.
+/// Duration per sparkline slot. 128 slots * 1s = ~2 minutes of history.
 const SPARK_SLOT_MS: u64 = 1000;
 
 /// Sentinel: no packet received in this slot. Below SX1262 sensitivity
@@ -68,6 +70,14 @@ impl DisplayState {
         self.current_slot_rssi = NO_SIGNAL;
         self.current_slot_tx = false;
     }
+
+    /// Whether the active dashboard should be shown (RX or TX mode).
+    fn is_active(&self) -> bool {
+        matches!(
+            self.last_status.state,
+            RadioState::Receiving | RadioState::Transmitting
+        )
+    }
 }
 
 #[task]
@@ -115,8 +125,8 @@ pub async fn display_task(
         return;
     };
 
-    // Show splash/waiting screen (dashboard with no config renders it)
-    render_and_flush(&mut display, &state, &board_info).await;
+    // Show splash/waiting screen
+    render_splash(&mut display, &board_info).await;
 
     loop {
         match select3(
@@ -141,7 +151,7 @@ pub async fn display_task(
                 state.last_status = radio_status;
 
                 if state.display_on {
-                    render_and_flush(&mut display, &state, &board_info).await;
+                    render_current(&mut display, &state, &board_info).await;
                 }
             }
             Either3::Second(cmd) => match cmd {
@@ -157,18 +167,18 @@ pub async fn display_task(
                     if let Some(s) = receiver.try_get() {
                         state.last_status = s;
                     }
-                    render_and_flush(&mut display, &state, &board_info).await;
+                    render_current(&mut display, &state, &board_info).await;
                 }
                 DisplayCommand::Reset => {
                     state = DisplayState::new();
-                    render_and_flush(&mut display, &state, &board_info).await;
+                    render_splash(&mut display, &board_info).await;
                 }
             },
             Either3::Third(()) => {
                 // Timer tick: advance sparkline slot
                 state.advance_slot();
-                if state.display_on {
-                    render_and_flush(&mut display, &state, &board_info).await;
+                if state.display_on && state.is_active() {
+                    render_dashboard(&mut display, &state, &board_info).await;
                 }
             }
         }
@@ -183,8 +193,27 @@ type Display<I> = ssd1306::Ssd1306Async<
     ssd1306::mode::BufferedGraphicsModeAsync<DisplaySize128x64>,
 >;
 
-async fn render_and_flush<I>(display: &mut Display<I>, state: &DisplayState, board: &render::BoardInfo<'_>)
-where
+/// Render the appropriate screen (active dashboard or splash) and flush.
+async fn render_current<I>(
+    display: &mut Display<I>,
+    state: &DisplayState,
+    board: &render::BoardInfo<'_>,
+) where
+    I: display_interface::AsyncWriteOnlyDataCommand,
+{
+    if state.is_active() {
+        render_dashboard(display, state, board).await;
+    } else {
+        render_splash(display, board).await;
+    }
+}
+
+/// Render the active dashboard and flush.
+async fn render_dashboard<I>(
+    display: &mut Display<I>,
+    state: &DisplayState,
+    board: &render::BoardInfo<'_>,
+) where
     I: display_interface::AsyncWriteOnlyDataCommand,
 {
     render::dashboard(
@@ -197,5 +226,14 @@ where
         state.current_slot_tx,
         board,
     );
+    let _ = display.flush().await;
+}
+
+/// Render the splash/waiting screen and flush.
+async fn render_splash<I>(display: &mut Display<I>, board: &render::BoardInfo<'_>)
+where
+    I: display_interface::AsyncWriteOnlyDataCommand,
+{
+    render::splash(display, board);
     let _ = display.flush().await;
 }
