@@ -236,9 +236,5 @@ fn cobs_decode(src: &[u8], dest: &mut [u8]) -> Option<usize> {
             di += 1;
         }
     }
-    // Strip trailing zero if present (COBS artifact)
-    if di > 0 && dest[di - 1] == 0 {
-        di -= 1;
-    }
     Some(di)
 }
