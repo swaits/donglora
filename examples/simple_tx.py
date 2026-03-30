@@ -9,7 +9,9 @@ Usage:
 # dependencies = ["cobs", "pyserial"]
 # ///
 
+import serial
 import sys
+
 sys.path.insert(0, __import__("pathlib").Path(__file__).parent.as_posix())
 import donglora as dl  # noqa: E402
 
@@ -24,7 +26,11 @@ elif args:
     if len(args) > 1:
         message = " ".join(args[1:])
 
-ser = dl.connect(port)
-print(dl.send(ser, "SetConfig", config=dl.DEFAULT_CONFIG))
-print(dl.send(ser, "Transmit", payload=message.encode()))
-print(f"Sent: {message!r}")
+try:
+    ser = dl.connect(port)
+    print(dl.send(ser, "SetConfig", config=dl.DEFAULT_CONFIG))
+    print(dl.send(ser, "Transmit", payload=message.encode()))
+    print(f"Sent: {message!r}")
+except serial.SerialException as e:
+    print(f"\nSerial error: {e}", file=sys.stderr)
+    sys.exit(1)

@@ -11,6 +11,7 @@ Usage:
 # ///
 
 import argparse
+import serial
 import sys
 import time
 
@@ -22,27 +23,24 @@ parser.add_argument("--role", choices=["tx", "rx"], required=True)
 parser.add_argument("port", nargs="?", help="Serial port (auto-detect if omitted)")
 args = parser.parse_args()
 
-ser = dl.connect(args.port)
-print(dl.send(ser, "SetConfig", config=dl.DEFAULT_CONFIG))
+try:
+    ser = dl.connect(args.port)
+    print(dl.send(ser, "SetConfig", config=dl.DEFAULT_CONFIG))
 
-if args.role == "tx":
-    print("Transmitting every 2 seconds (Ctrl+C to stop)...\n")
-    seq = 0
-    try:
+    if args.role == "tx":
+        print("Transmitting every 2 seconds (Ctrl+C to stop)...\n")
+        seq = 0
         while True:
             msg = f"ping #{seq}"
             resp = dl.send(ser, "Transmit", payload=msg.encode())
             print(f"  TX: {msg!r}  → {resp['type']}")
             seq += 1
             time.sleep(2)
-    except KeyboardInterrupt:
-        print("\nDone.")
 
-else:
-    print(dl.send(ser, "StartRx"))
-    print("Receiving (Ctrl+C to stop)...\n")
-    ser.timeout = 1
-    try:
+    else:
+        print(dl.send(ser, "StartRx"))
+        print("Receiving (Ctrl+C to stop)...\n")
+        ser.timeout = 1
         while True:
             data = dl.read_frame(ser)
             if data is None:
@@ -52,6 +50,13 @@ else:
                 p = resp["payload"]
                 text = p.decode("utf-8", errors="replace")
                 print(f"  RX: {text!r}  RSSI:{resp['rssi']}dBm  SNR:{resp['snr']}dB")
-    except KeyboardInterrupt:
+
+except KeyboardInterrupt:
+    try:
         dl.send(ser, "StopRx")
-        print("\nDone.")
+    except Exception:
+        pass
+    print("\nDone.")
+except serial.SerialException as e:
+    print(f"\nSerial error: {e}", file=sys.stderr)
+    sys.exit(1)
