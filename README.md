@@ -1,5 +1,7 @@
 # DongLoRa
 
+**/ˈdɒŋ.ɡəl.ɔːr.ə/** — a [portmanteau](https://en.wikipedia.org/wiki/Portmanteau) of **dongle** and **LoRa**.
+
 Transparent LoRa radio over USB. Plug in a supported board, talk LoRa
 from your host. The firmware is a dumb pipe — it exposes clean LoRa
 parameters (frequency, bandwidth, spreading factor, coding rate, TX power)
