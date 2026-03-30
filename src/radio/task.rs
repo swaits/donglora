@@ -244,9 +244,12 @@ async fn handle_cmd(
                     }
                 }
 
-                // Restore previous state. If we were receiving, restart RX.
+                // Restore previous state. If we were receiving, restart RX
+                // using the stored config — NOT the per-packet TX override.
                 state.state = if was_receiving {
-                    match start_rx(lora, &cfg).await {
+                    // state.config is always Some when was_receiving (invariant).
+                    let rx_cfg = state.config.unwrap_or(cfg);
+                    match start_rx(lora, &rx_cfg).await {
                         Ok(()) => RadioState::Receiving,
                         Err(e) => {
                             warn!("post-TX RX restart failed: {}", e);
