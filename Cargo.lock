@@ -1818,7 +1818,9 @@ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
 
 [[package]]
 name = "ucobs"
-version = "0.1.0"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12e019ee3a487897e4b704b5702deb9f2181f7fc210558c9fb5b18aacb12e3f7"
 
 [[package]]
 name = "ufmt-write"

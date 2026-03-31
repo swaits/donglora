@@ -14,6 +14,10 @@ readme = "README.md"
 keywords = ["lora", "radio", "embedded", "usb", "firmware"]
 categories = ["embedded", "hardware-support", "no-std"]
 
+# UPGRADE BLOCKED: embassy-executor 0.10 and ucobs 0.3 need Rust >= 1.93
+# stable. The ESP Xtensa toolchain (espup) is a nightly fork that may not
+# support the required language features or pass MSRV gating. Revisit when
+# espup catches up. Check: rustup run esp rustc --version
 [dependencies]
 cfg-if = "1.0"
 critical-section = "1.2"
@@ -25,7 +29,7 @@ embassy-sync = "0.8"
 embassy-time = "0.5"
 embassy-usb = { version = "0.6", features = ["defmt"] }
 embassy-usb-driver = "0.2"
-ucobs = { path = "../ucobs" }
+ucobs = "0.2"
 heapless = "0.9"
 lora-phy = "3.0"
 static_cell = "2.1"
