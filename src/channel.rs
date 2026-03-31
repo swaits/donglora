@@ -14,7 +14,6 @@ use crate::protocol::{Command, RadioConfig, Response};
 
 /// Display commands routed from usb_task to display_task.
 #[derive(Debug, Clone, Copy, defmt::Format)]
-#[allow(dead_code)] // Constructed by usb_task once CDC-ACM is wired up
 pub enum DisplayCommand {
     On,
     Off,

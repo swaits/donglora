@@ -302,7 +302,10 @@ fn to_sf(sf: u8) -> lora_phy::mod_params::SpreadingFactor {
         10 => _10,
         11 => _11,
         12 => _12,
-        _ => _7, // validated to 5-12 earlier; unreachable but safe
+        _ => {
+            warn!("BUG: invalid SF {} passed validation", sf);
+            _7
+        }
     }
 }
 
@@ -313,7 +316,10 @@ fn to_cr(cr: u8) -> lora_phy::mod_params::CodingRate {
         6 => _4_6,
         7 => _4_7,
         8 => _4_8,
-        _ => _4_5, // validated to 5-8 earlier; unreachable but safe
+        _ => {
+            warn!("BUG: invalid CR {} passed validation", cr);
+            _4_5
+        }
     }
 }
 

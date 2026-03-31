@@ -29,7 +29,7 @@ embassy-sync = "0.8"
 embassy-time = "0.5"
 embassy-usb = { version = "0.6", features = ["defmt"] }
 embassy-usb-driver = "0.2"
-ucobs = "0.2"
+ucobs = { path = "../ucobs", features = ["legacy-msrv"] }
 heapless = "0.9"
 lora-phy = "3.0"
 static_cell = "2.1"
@@ -78,6 +78,9 @@ rak_wisblock_4631 = [
     "embassy-executor/arch-cortex-m",
     "embassy-executor/executor-thread",
 ]
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"
 
 [profile.release]
 codegen-units = 1

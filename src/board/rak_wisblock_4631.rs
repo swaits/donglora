@@ -66,6 +66,10 @@ impl super::traits::LoRaBoard for Board {
     }
 
     fn mac_address() -> [u8; 6] {
+        // SAFETY: 0x10000000 is the nRF52840 FICR (Factory Information Configuration
+        // Registers) base address. Offsets 0x0A4 and 0x0A8 are the DEVICEADDR[0] and
+        // DEVICEADDR[1] registers containing the factory-programmed device address.
+        // read_volatile is correct for memory-mapped hardware registers.
         unsafe {
             let ficr = 0x10000000 as *const u32;
             let addr0 = core::ptr::read_volatile(ficr.byte_add(0x0A4));
