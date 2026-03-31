@@ -3,13 +3,24 @@ use owo_colors::OwoColorize;
 use std::fs;
 
 fn main() {
+    // Protocol tests run on the host without a board feature. Cargo doesn't
+    // expose `cfg(test)` to build scripts, so we rely on an env var set by
+    // the justfile `test` recipe. See: `just test`
+    if std::env::var_os("DONGLORA_HOST_TEST").is_some() {
+        return;
+    }
+
     let board_dir = "src/board";
     let boards: Vec<String> = fs::read_dir(board_dir)
         .expect("failed to read src/board directory")
         .filter_map(|e| {
             let p = e.ok()?.path();
             let stem = p.file_stem()?.to_str()?;
-            if p.is_file() && p.extension()? == "rs" && stem != "mod" && stem != "traits" {
+            // Exclude non-board files: mod.rs, traits.rs, and platform helpers (esp32s3.rs).
+            if p.is_file()
+                && p.extension()? == "rs"
+                && !matches!(stem, "mod" | "traits" | "esp32s3")
+            {
                 return Some(p.file_stem()?.to_str()?.to_string());
             }
             None

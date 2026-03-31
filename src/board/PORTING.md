@@ -5,8 +5,14 @@
 ### 1. Create the board file
 
 Create `src/board/your_board.rs`. Use an existing board as a template:
-- ESP32-S3 boards: copy `heltec_v4.rs`
+- ESP32-S3 boards: copy `heltec_v4.rs` (uses shared helpers from `esp32s3.rs`)
 - nRF52840 boards: copy `rak_wisblock_4631.rs`
+
+ESP32-S3 boards share common type aliases, peripheral bundles, and init helpers
+via `src/board/esp32s3.rs`. Your board file only needs the trait impl and
+board-specific init (Vext GPIO, display reset). If you add a new ESP32-S3 board,
+add its feature to the `#[cfg(any(...))]` gate on `mod esp32s3` in
+`src/board/mod.rs.j2`.
 
 ### 2. Define concrete types
 
@@ -71,9 +77,9 @@ In `Cargo.toml`, add a feature with your board's HAL dependencies:
 your_board = ["dep:your-hal", ...]
 ```
 
-### 7. Add to Justfile
+### 7. Add to justfile
 
-Add your board's feature/target/chip to the `boards` list at the top of `Justfile`.
+Add your board's feature/target/chip to the `boards` list at the top of `justfile`.
 
 ### 8. Build and test
 
