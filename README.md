@@ -10,9 +10,9 @@ and gets out of the way. No mesh logic, no protocol opinions, no config files.
 ## Quick Start
 
 1. Get a [supported board](#supported-boards)
-2. Install toolchain (see [Building](#building))
-3. Build and flash: `just flash heltec_v4`
-4. Run an example: `uv run examples/simple_rx.py`
+2. `just setup` (installs all tools and toolchains)
+3. `just flash heltec_v4`
+4. `just ex rx`
 5. See packets
 
 ## Supported Boards
@@ -34,41 +34,43 @@ specification with worked examples.
 
 ## Examples
 
-All examples use [uv](https://docs.astral.sh/uv/) for dependency management:
+Python dependencies are handled automatically — just run:
+
+```sh
+just ex rx                     # receive packets
+just ex tx                     # transmit a packet
+just ex ping-pong --role tx    # two-dongle ping-pong demo
+just ex test-commands          # exercise all DongLoRa commands
+just ex bridge --mode server   # LoRa bridge over TCP
+just ex meshcore               # MeshCore packet decoder
+just ex run simple_rx          # run any example by name
+```
 
 | Script | Description |
 |--------|-------------|
-| [`all_commands.py`](examples/all_commands.py) | Exercise all 8 commands (Ping, SetConfig, GetConfig, StartRx, StopRx, Transmit, DisplayOn/Off) |
 | [`simple_rx.py`](examples/simple_rx.py) | Configure radio, receive and print packets |
 | [`simple_tx.py`](examples/simple_tx.py) | Transmit a single packet |
 | [`ping_pong.py`](examples/ping_pong.py) | Two-dongle demo (`--role tx` / `--role rx`) |
+| [`all_commands.py`](examples/all_commands.py) | Exercise all 8 commands (Ping, SetConfig, GetConfig, StartRx, StopRx, Transmit, DisplayOn/Off) |
 | [`lora_bridge.py`](examples/lora_bridge.py) | Two-way LoRa bridge over TCP (works over Tailscale, WireGuard, etc.) |
 | [`meshcore/`](examples/meshcore/) | Full MeshCore packet decoder (advanced example) |
 
 ## Building
 
-Requires [just](https://github.com/casey/just) and Rust.
+Requires [just](https://github.com/casey/just), [mise](https://mise.jdx.dev/), and Rust.
 
 ```sh
-just build-all          # build firmware for all boards (skips unavailable toolchains)
+just setup              # install all tools and toolchains (one-time)
+just build-all          # build firmware for all boards
 just build heltec_v4    # build a specific board
 just check-all          # compile-check only (no firmware output)
 just flash heltec_v4    # build + flash
 just clippy heltec_v4   # lint
 ```
 
-### Xtensa boards (Heltec V3/V4)
-
-Requires the [ESP toolchain](https://github.com/esp-rs/espup):
-
-```sh
-cargo install espup
-espup install --toolchain-version 1.82.0.3
-```
-
-### ARM boards (RAK 4631)
-
-Stock Rust stable. Targets are installed automatically.
+`just setup` handles everything: mise-managed tools (espup, espflash,
+probe-rs), the ESP Xtensa toolchain, nightly rust-src, and ARM targets.
+Individual build commands will also auto-install missing tools as needed.
 
 <details>
 <summary><strong>Board Roadmap</strong></summary>

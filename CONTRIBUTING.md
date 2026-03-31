@@ -6,7 +6,7 @@ DongLoRa is designed to make adding new boards easy:
 
 1. Create `src/board/your_board.rs` implementing the `init()` function
 2. Add a Cargo feature in `Cargo.toml` with the board's dependencies
-3. Add the board's feature/target/chip to the `Justfile` boards list
+3. Add the board's feature/target/chip to the `justfile` boards list
 4. `build.rs` auto-discovers the new file and generates the module selector
 
 See existing board files (`heltec_v3.rs`, `rak_wisblock_4631.rs`) as templates.
@@ -23,13 +23,14 @@ common tasks consume. No shared board code — each board is self-contained.
 ## Building and Testing
 
 ```sh
-just check-all     # Compile-check all boards (skips unavailable toolchains)
+just setup         # Install all tools and toolchains (one-time)
+just check-all     # Compile-check all boards
 just build-all     # Build release firmware for all boards
 just clippy <board> # Lint a specific board
 ```
 
-Xtensa boards (Heltec V3/V4) require the ESP toolchain via `espup`.
-ARM boards (RAK 4631) build with stock `rustup`.
+Tool versions (espup, espflash, probe-rs) are pinned in `mise.toml`.
+`just setup` installs everything; individual commands also auto-install as needed.
 
 ## Commits
 
