@@ -15,7 +15,8 @@ pub const RADIO_CONFIG_SIZE: usize = 10;
 pub const TX_POWER_MAX: i8 = i8::MIN; // -128 on the wire
 
 /// LoRa signal bandwidth.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), derive(defmt::Format))]
 #[repr(u8)]
 pub enum Bandwidth {
     Khz7 = 0,
@@ -54,7 +55,8 @@ impl Bandwidth {
 /// ```text
 /// [freq_hz:4] [bw:1] [sf:1] [cr:1] [sync_word:2] [tx_power_dbm:1]
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), derive(defmt::Format))]
 pub struct RadioConfig {
     /// Frequency in Hz (150_000_000 - 960_000_000 for SX1262).
     pub freq_hz: u32,
@@ -245,9 +247,10 @@ impl Response {
 }
 
 /// Error codes reported to the host.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, defmt::Format)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), derive(defmt::Format))]
 #[repr(u8)]
-#[allow(dead_code)]
+#[allow(dead_code)] // CrcError reserved per PROTOCOL.md (error code 3)
 pub enum ErrorCode {
     InvalidConfig = 0,
     RadioBusy = 1,
@@ -255,4 +258,350 @@ pub enum ErrorCode {
     CrcError = 3,
     NotConfigured = 4,
     NoDisplay = 5,
+}
+
+// ── Tests ───────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_config() -> RadioConfig {
+        RadioConfig {
+            freq_hz: 915_000_000,
+            bw: Bandwidth::Khz125,
+            sf: 7,
+            cr: 5,
+            sync_word: 0x3444,
+            tx_power_dbm: 22,
+        }
+    }
+
+    // ── RadioConfig roundtrip ───────────────────────────────────────
+
+    #[test]
+    fn radio_config_roundtrip() {
+        let cfg = make_config();
+        let mut buf = [0u8; RADIO_CONFIG_SIZE];
+        let n = cfg.write_to(&mut buf);
+        assert_eq!(n, RADIO_CONFIG_SIZE);
+        assert_eq!(RadioConfig::from_bytes(&buf), Some(cfg));
+    }
+
+    #[test]
+    fn radio_config_roundtrip_all_bandwidths() {
+        for bw_val in 0u8..=9 {
+            let bw = Bandwidth::from_u8(bw_val).unwrap();
+            let cfg = RadioConfig {
+                freq_hz: 433_000_000,
+                bw,
+                sf: 12,
+                cr: 8,
+                sync_word: 0x1234,
+                tx_power_dbm: -9,
+            };
+            let mut buf = [0u8; RADIO_CONFIG_SIZE];
+            cfg.write_to(&mut buf);
+            assert_eq!(RadioConfig::from_bytes(&buf), Some(cfg));
+        }
+    }
+
+    #[test]
+    fn radio_config_roundtrip_negative_power() {
+        let cfg = RadioConfig {
+            tx_power_dbm: TX_POWER_MAX,
+            ..make_config()
+        };
+        let mut buf = [0u8; RADIO_CONFIG_SIZE];
+        cfg.write_to(&mut buf);
+        assert_eq!(RadioConfig::from_bytes(&buf), Some(cfg));
+    }
+
+    #[test]
+    fn radio_config_from_short_buffer() {
+        let buf = [0u8; RADIO_CONFIG_SIZE - 1];
+        assert!(RadioConfig::from_bytes(&buf).is_none());
+    }
+
+    #[test]
+    fn radio_config_from_empty_buffer() {
+        assert!(RadioConfig::from_bytes(&[]).is_none());
+    }
+
+    #[test]
+    fn radio_config_invalid_bandwidth() {
+        let mut buf = [0u8; RADIO_CONFIG_SIZE];
+        make_config().write_to(&mut buf);
+        buf[4] = 255; // invalid bandwidth
+        assert!(RadioConfig::from_bytes(&buf).is_none());
+    }
+
+    // ── RadioConfig::validate ───────────────────────────────────────
+
+    #[test]
+    fn validate_freq_boundaries() {
+        let power_range = (-9, 22);
+        let base = make_config();
+
+        let mut cfg = RadioConfig { freq_hz: 150_000_000, ..base };
+        assert!(cfg.validate(power_range).is_ok());
+
+        cfg.freq_hz = 960_000_000;
+        assert!(cfg.validate(power_range).is_ok());
+
+        cfg.freq_hz = 149_999_999;
+        assert!(cfg.validate(power_range).is_err());
+
+        cfg.freq_hz = 960_000_001;
+        assert!(cfg.validate(power_range).is_err());
+    }
+
+    #[test]
+    fn validate_sf_boundaries() {
+        let power_range = (-9, 22);
+        let base = make_config();
+
+        for sf in 5..=12 {
+            assert!(RadioConfig { sf, ..base }.validate(power_range).is_ok());
+        }
+        assert!(RadioConfig { sf: 4, ..base }.validate(power_range).is_err());
+        assert!(RadioConfig { sf: 13, ..base }.validate(power_range).is_err());
+    }
+
+    #[test]
+    fn validate_cr_boundaries() {
+        let power_range = (-9, 22);
+        let base = make_config();
+
+        for cr in 5..=8 {
+            assert!(RadioConfig { cr, ..base }.validate(power_range).is_ok());
+        }
+        assert!(RadioConfig { cr: 4, ..base }.validate(power_range).is_err());
+        assert!(RadioConfig { cr: 9, ..base }.validate(power_range).is_err());
+    }
+
+    #[test]
+    fn validate_tx_power_max_sentinel() {
+        let cfg = RadioConfig { tx_power_dbm: TX_POWER_MAX, ..make_config() };
+        assert!(cfg.validate((-9, 22)).is_ok());
+    }
+
+    #[test]
+    fn validate_tx_power_out_of_range() {
+        let cfg = RadioConfig { tx_power_dbm: 23, ..make_config() };
+        assert!(cfg.validate((-9, 22)).is_err());
+
+        let cfg = RadioConfig { tx_power_dbm: -10, ..make_config() };
+        assert!(cfg.validate((-9, 22)).is_err());
+    }
+
+    // ── RadioConfig::resolve_power ──────────────────────────────────
+
+    #[test]
+    fn resolve_power_max_sentinel() {
+        let cfg = RadioConfig { tx_power_dbm: TX_POWER_MAX, ..make_config() };
+        assert_eq!(cfg.resolve_power((-9, 22)).tx_power_dbm, 22);
+    }
+
+    #[test]
+    fn resolve_power_explicit_unchanged() {
+        let cfg = RadioConfig { tx_power_dbm: 10, ..make_config() };
+        assert_eq!(cfg.resolve_power((-9, 22)).tx_power_dbm, 10);
+    }
+
+    // ── Command::from_bytes ─────────────────────────────────────────
+
+    #[test]
+    fn command_ping() {
+        assert_eq!(Command::from_bytes(&[0]), Some(Command::Ping));
+    }
+
+    #[test]
+    fn command_get_config() {
+        assert_eq!(Command::from_bytes(&[1]), Some(Command::GetConfig));
+    }
+
+    #[test]
+    fn command_set_config() {
+        let cfg = make_config();
+        let mut buf = [0u8; 1 + RADIO_CONFIG_SIZE];
+        buf[0] = 2;
+        cfg.write_to(&mut buf[1..]);
+        assert_eq!(Command::from_bytes(&buf), Some(Command::SetConfig(cfg)));
+    }
+
+    #[test]
+    fn command_start_stop_rx() {
+        assert_eq!(Command::from_bytes(&[3]), Some(Command::StartRx));
+        assert_eq!(Command::from_bytes(&[4]), Some(Command::StopRx));
+    }
+
+    #[test]
+    fn command_transmit_no_config() {
+        let payload = b"hello";
+        let mut buf = [0u8; 64];
+        buf[0] = 5; // tag
+        buf[1] = 0; // has_config = false
+        buf[2..4].copy_from_slice(&(payload.len() as u16).to_le_bytes());
+        buf[4..9].copy_from_slice(payload);
+
+        match Command::from_bytes(&buf[..9]).unwrap() {
+            Command::Transmit { config, payload: p } => {
+                assert!(config.is_none());
+                assert_eq!(p.as_slice(), b"hello");
+            }
+            _ => panic!("expected Transmit"),
+        }
+    }
+
+    #[test]
+    fn command_transmit_with_config() {
+        let cfg = make_config();
+        let mut buf = [0u8; 64];
+        buf[0] = 5; // tag
+        buf[1] = 1; // has_config = true
+        cfg.write_to(&mut buf[2..]);
+        let payload = b"test";
+        let pos = 2 + RADIO_CONFIG_SIZE;
+        buf[pos..pos + 2].copy_from_slice(&(payload.len() as u16).to_le_bytes());
+        buf[pos + 2..pos + 6].copy_from_slice(payload);
+
+        match Command::from_bytes(&buf[..pos + 6]).unwrap() {
+            Command::Transmit { config, payload: p } => {
+                assert_eq!(config, Some(cfg));
+                assert_eq!(p.as_slice(), b"test");
+            }
+            _ => panic!("expected Transmit"),
+        }
+    }
+
+    #[test]
+    fn command_transmit_empty_payload() {
+        let mut buf = [0u8; 4];
+        buf[0] = 5; // tag
+        buf[1] = 0; // has_config = false
+        buf[2..4].copy_from_slice(&0u16.to_le_bytes());
+
+        match Command::from_bytes(&buf).unwrap() {
+            Command::Transmit { config, payload } => {
+                assert!(config.is_none());
+                assert!(payload.is_empty());
+            }
+            _ => panic!("expected Transmit"),
+        }
+    }
+
+    #[test]
+    fn command_transmit_truncated() {
+        // Tag only — missing has_config byte
+        assert!(Command::from_bytes(&[5]).is_none());
+
+        // has_config=1 but no config bytes
+        assert!(Command::from_bytes(&[5, 1]).is_none());
+
+        // has_config=0 but no length bytes
+        assert!(Command::from_bytes(&[5, 0]).is_none());
+
+        // has_config=0, length says 5 but only 2 bytes of payload
+        let mut buf = [0u8; 6];
+        buf[0] = 5;
+        buf[1] = 0;
+        buf[2..4].copy_from_slice(&5u16.to_le_bytes());
+        buf[4] = 0xAA;
+        buf[5] = 0xBB;
+        assert!(Command::from_bytes(&buf).is_none());
+    }
+
+    #[test]
+    fn command_display_and_mac() {
+        assert_eq!(Command::from_bytes(&[6]), Some(Command::DisplayOn));
+        assert_eq!(Command::from_bytes(&[7]), Some(Command::DisplayOff));
+        assert_eq!(Command::from_bytes(&[8]), Some(Command::GetMac));
+    }
+
+    #[test]
+    fn command_invalid_tag() {
+        assert!(Command::from_bytes(&[9]).is_none());
+        assert!(Command::from_bytes(&[255]).is_none());
+    }
+
+    #[test]
+    fn command_empty_buffer() {
+        assert!(Command::from_bytes(&[]).is_none());
+    }
+
+    // ── Response::write_to ──────────────────────────────────────────
+
+    #[test]
+    fn response_pong() {
+        let mut buf = [0u8; 1];
+        assert_eq!(Response::Pong.write_to(&mut buf), 1);
+        assert_eq!(buf[0], 0);
+    }
+
+    #[test]
+    fn response_config() {
+        let cfg = make_config();
+        let mut buf = [0u8; 1 + RADIO_CONFIG_SIZE];
+        let n = Response::Config(cfg).write_to(&mut buf);
+        assert_eq!(n, 1 + RADIO_CONFIG_SIZE);
+        assert_eq!(buf[0], 1);
+        assert_eq!(RadioConfig::from_bytes(&buf[1..]), Some(cfg));
+    }
+
+    #[test]
+    fn response_rx_packet() {
+        let mut payload = Vec::new();
+        let _ = payload.extend_from_slice(b"data");
+        let mut buf = [0u8; 64];
+        let n = Response::RxPacket { rssi: -80, snr: 10, payload }.write_to(&mut buf);
+        assert_eq!(n, 7 + 4); // tag(1) + rssi(2) + snr(2) + len(2) + "data"(4)
+        assert_eq!(buf[0], 2);
+        assert_eq!(i16::from_le_bytes([buf[1], buf[2]]), -80);
+        assert_eq!(i16::from_le_bytes([buf[3], buf[4]]), 10);
+        assert_eq!(u16::from_le_bytes([buf[5], buf[6]]), 4);
+        assert_eq!(&buf[7..11], b"data");
+    }
+
+    #[test]
+    fn response_tx_done() {
+        let mut buf = [0u8; 1];
+        assert_eq!(Response::TxDone.write_to(&mut buf), 1);
+        assert_eq!(buf[0], 3);
+    }
+
+    #[test]
+    fn response_ok() {
+        let mut buf = [0u8; 1];
+        assert_eq!(Response::Ok.write_to(&mut buf), 1);
+        assert_eq!(buf[0], 4);
+    }
+
+    #[test]
+    fn response_error_codes() {
+        let mut buf = [0u8; 2];
+        for (code, val) in [
+            (ErrorCode::InvalidConfig, 0),
+            (ErrorCode::RadioBusy, 1),
+            (ErrorCode::TxTimeout, 2),
+            (ErrorCode::CrcError, 3),
+            (ErrorCode::NotConfigured, 4),
+            (ErrorCode::NoDisplay, 5),
+        ] {
+            let n = Response::Error(code).write_to(&mut buf);
+            assert_eq!(n, 2);
+            assert_eq!(buf[0], 5);
+            assert_eq!(buf[1], val);
+        }
+    }
+
+    #[test]
+    fn response_mac_address() {
+        let mac = [0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF];
+        let mut buf = [0u8; 7];
+        let n = Response::MacAddress(mac).write_to(&mut buf);
+        assert_eq!(n, 7);
+        assert_eq!(buf[0], 6);
+        assert_eq!(&buf[1..7], &mac);
+    }
 }

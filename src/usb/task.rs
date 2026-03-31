@@ -10,7 +10,6 @@ use embassy_usb::class::cdc_acm::{CdcAcmClass, Receiver, Sender, State};
 use embassy_usb::Builder;
 use static_cell::StaticCell;
 
-use crate::board::UsbParts;
 use crate::channel::{
     CommandChannel, DisplayCommand, DisplayCommandChannel, ResponseChannel,
 };
@@ -28,11 +27,12 @@ const _: () = assert!(
 
 #[task]
 pub async fn usb_task(
-    parts: UsbParts,
+    parts: crate::board::UsbParts,
     commands: &'static CommandChannel,
     responses: &'static ResponseChannel,
     display_commands: &'static DisplayCommandChannel,
     has_display: bool,
+    mac: [u8; 6],
 ) {
     // ── USB device configuration ────────────────────────────────────
     // VID 0x1209: pid.codes open-source USB vendor ID
@@ -41,11 +41,20 @@ pub async fn usb_task(
     let mut config = embassy_usb::Config::new(0x1209, 0x5741);
     config.manufacturer = Some("DongLoRa");
     config.product = Some("DongLoRa LoRa Radio");
-    config.serial_number = Some("001");
     config.device_class = 0xEF;
     config.device_sub_class = 0x02;
     config.device_protocol = 0x01;
     config.composite_with_iads = true;
+
+    // Use MAC address as USB serial number for unique device identification.
+    static SERIAL_BUF: StaticCell<[u8; 12]> = StaticCell::new();
+    let serial_buf = SERIAL_BUF.init([0u8; 12]);
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    for (i, &byte) in mac.iter().enumerate() {
+        serial_buf[i * 2] = HEX[(byte >> 4) as usize];
+        serial_buf[i * 2 + 1] = HEX[(byte & 0x0F) as usize];
+    }
+    config.serial_number = Some(core::str::from_utf8(serial_buf).expect("MAC hex is valid UTF-8"));
 
     static DESC_BUF: StaticCell<[u8; 256]> = StaticCell::new();
     static CONF_BUF: StaticCell<[u8; 256]> = StaticCell::new();
@@ -75,7 +84,7 @@ pub async fn usb_task(
     // ── Run USB device + protocol loop concurrently ────────────────
     join(
         usb_dev.run(),
-        protocol_loop(sender, receiver, commands, responses, display_commands, has_display),
+        protocol_loop(sender, receiver, commands, responses, display_commands, has_display, mac),
     )
     .await;
 }
@@ -87,6 +96,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
     responses: &'static ResponseChannel,
     display_commands: &'static DisplayCommandChannel,
     has_display: bool,
+    mac: [u8; 6],
 ) {
     use embassy_futures::select::select3;
     use embassy_futures::select::Either3;
@@ -131,7 +141,7 @@ async fn protocol_loop<'d, D: embassy_usb_driver::Driver<'d>>(
                             {
                                 if let Some(cmd) = Command::from_bytes(&decode_buf[..decoded_len]) {
                                     route_command(
-                                        cmd, commands, responses, display_commands, has_display,
+                                        cmd, commands, responses, display_commands, has_display, mac,
                                     )
                                     .await;
                                 }
@@ -189,6 +199,7 @@ async fn route_command(
     responses: &ResponseChannel,
     display_commands: &DisplayCommandChannel,
     has_display: bool,
+    mac: [u8; 6],
 ) {
     match cmd {
         Command::DisplayOn => {
@@ -208,10 +219,7 @@ async fn route_command(
             }
         }
         Command::GetMac => {
-            use crate::board::{Board, LoRaBoard};
-            responses
-                .send(Response::MacAddress(Board::mac_address()))
-                .await;
+            responses.send(Response::MacAddress(mac)).await;
         }
         other => {
             commands.send(other).await;
