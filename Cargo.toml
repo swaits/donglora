@@ -29,7 +29,7 @@ embassy-sync = "0.8"
 embassy-time = "0.5"
 embassy-usb = { version = "0.6", features = ["defmt"] }
 embassy-usb-driver = "0.2"
-ucobs = { path = "../ucobs", features = ["legacy-msrv"] }
+ucobs = { version = "0.3", features = ["legacy-msrv"] }
 heapless = "0.9"
 lora-phy = "3.0"
 static_cell = "2.1"
@@ -44,14 +44,32 @@ embedded-io-async = "0.7"
 embassy-futures = "0.1"
 
 # ESP32-S3 (Heltec V3) — requires esp toolchain (espup)
-esp-backtrace = { version = "0.18", optional = true, features = ["esp32s3", "panic-handler", "defmt"] }
-esp-hal = { version = "1.0", optional = true, features = ["esp32s3", "unstable"] }
-esp-println = { version = "0.16", optional = true, features = ["esp32s3", "defmt-espflash"] }
-esp-rtos = { version = "0.2", optional = true, features = ["esp32s3", "embassy"] }
+esp-backtrace = { version = "0.18", optional = true, features = [
+  "esp32s3",
+  "panic-handler",
+  "defmt",
+] }
+esp-hal = { version = "1.0", optional = true, features = [
+  "esp32s3",
+  "unstable",
+] }
+esp-println = { version = "0.16", optional = true, features = [
+  "esp32s3",
+  "defmt-espflash",
+] }
+esp-rtos = { version = "0.2", optional = true, features = [
+  "esp32s3",
+  "embassy",
+] }
 
 # nRF52840 (RAK 4631)
 cortex-m-rt = { version = "0.7", optional = true }
-embassy-nrf = { version = "0.10", optional = true, features = ["nrf52840", "gpiote", "time-driver-rtc1", "defmt"] }
+embassy-nrf = { version = "0.10", optional = true, features = [
+  "nrf52840",
+  "gpiote",
+  "time-driver-rtc1",
+  "defmt",
+] }
 panic-probe = { version = "1.0", optional = true, features = ["print-defmt"] }
 
 [build-dependencies]
@@ -60,23 +78,23 @@ owo-colors = "4.3"
 
 [features]
 heltec_v3 = [
-    "dep:esp-backtrace",
-    "dep:esp-hal",
-    "dep:esp-println",
-    "dep:esp-rtos",
+  "dep:esp-backtrace",
+  "dep:esp-hal",
+  "dep:esp-println",
+  "dep:esp-rtos",
 ]
 heltec_v4 = [
-    "dep:esp-backtrace",
-    "dep:esp-hal",
-    "dep:esp-println",
-    "dep:esp-rtos",
+  "dep:esp-backtrace",
+  "dep:esp-hal",
+  "dep:esp-println",
+  "dep:esp-rtos",
 ]
 rak_wisblock_4631 = [
-    "dep:cortex-m-rt",
-    "dep:embassy-nrf",
-    "dep:panic-probe",
-    "embassy-executor/arch-cortex-m",
-    "embassy-executor/executor-thread",
+  "dep:cortex-m-rt",
+  "dep:embassy-nrf",
+  "dep:panic-probe",
+  "embassy-executor/arch-cortex-m",
+  "embassy-executor/executor-thread",
 ]
 
 [lints.clippy]

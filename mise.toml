@@ -3,8 +3,8 @@ rust = "1.93"
 python = "3.14"
 uv = "latest"
 just = "latest"
-jj = "latest"
 
+"cargo:cargo-binutils" = "latest"   # `cargo size`, `cargo objdump`, etc.
 "cargo:espup" = "0.16"
 "cargo:espflash" = "3"              # 4.x has broken nix dependency on current stable Rust
 "cargo:probe-rs-tools" = "0.31"

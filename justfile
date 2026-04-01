@@ -91,6 +91,13 @@ size board:
 test:
     DONGLORA_HOST_TEST=1 cargo test
 
+# Check for outdated dependencies
+outdated:
+    @# embassy-executor 0.10 renamed arch-* → platform-* features.
+    @# esp-rtos 0.2 still pins embassy-executor ^0.9, blocking the upgrade.
+    @# cargo-outdated crashes trying to resolve 0.10 with the old feature name.
+    cargo outdated --exclude embassy-executor
+
 # Example scripts (just ex rx, just ex tx, just ex meshcore, ...)
 mod ex 'examples/justfile'
 
@@ -99,7 +106,7 @@ mod ex 'examples/justfile'
 # Install mise-managed tools if any are missing (fast no-op when current)
 [private]
 _ensure_tools:
-    @mise install
+    @mise install --quiet
 
 # Run a cargo command for a board.
 # Xtensa: nightly cargo + esp rustc (via RUSTC override) + -Zbuild-std=core
