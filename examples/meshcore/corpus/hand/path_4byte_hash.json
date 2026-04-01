@@ -1,29 +1,17 @@
 {
-  "description": "PATH flood, 1 hop with 4-byte hash",
+  "description": "PATH flood, 4-byte hash (reserved hash_size_code 3, invalid)",
   "tags": [
+    "invalid",
     "path",
     "flood",
     "4byte_hash",
-    "encrypted"
+    "reserved_hash_size"
   ],
   "packet_hex": "21c1aabbccdde6e92e4700000000000000000000000000000000",
-  "valid": true,
+  "valid": false,
   "expected": {
     "route_type": "flood",
     "payload_type": "PATH",
-    "payload_ver": 0,
-    "transport_codes": null,
-    "path": {
-      "hash_size": 4,
-      "hops": [
-        "aabbccdd"
-      ]
-    },
-    "payload": {
-      "dst": "e6",
-      "src": "e9",
-      "mac": "2e47",
-      "ciphertext_len": 16
-    }
+    "error": "bad_framing"
   }
 }

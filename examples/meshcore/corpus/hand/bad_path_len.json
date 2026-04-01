@@ -1,11 +1,11 @@
 {
-  "description": "TXT_MSG flood, path_len claims 33 hops (4B hash) but data is too short",
+  "description": "TXT_MSG flood, path_len claims 33 hops (2B hash) but data is too short",
   "tags": [
     "invalid",
     "bad_framing",
     "path"
   ],
-  "packet_hex": "09e1000000000000000000000000000000000000000000000000",
+  "packet_hex": "0961000000000000000000000000000000000000000000000000",
   "valid": false,
   "expected": {
     "route_type": "flood",

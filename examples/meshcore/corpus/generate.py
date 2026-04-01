@@ -94,7 +94,7 @@ def advert_appdata(draw):
             name = data[8 if has_loc else 0:].decode("ascii", errors="replace")
 
     app_data = bytes([flags]) + data
-    node_label = NODE_TYPES.get(node_type, f"type={node_type}")
+    node_label = NODE_TYPES.get(node_type, f"0x{node_type:02x}")
     return app_data, {"flags": flags, "node_type": node_label, "location": loc, "name": name}
 
 
@@ -158,7 +158,7 @@ def valid_encrypted_peer_packet(draw):
     dst = draw(st.integers(min_value=0, max_value=255))
     src = draw(st.integers(min_value=0, max_value=255))
     mac = draw(st.binary(min_size=2, max_size=2))
-    ct_len = draw(st.integers(min_value=0, max_value=64))
+    ct_len = draw(st.integers(min_value=16, max_value=64).filter(lambda n: n % 16 == 0))
     ct = draw(st.binary(min_size=ct_len, max_size=ct_len))
 
     hdr = bytes([mc_header(ptype, route_type)])
@@ -188,7 +188,7 @@ def valid_group_packet(draw):
     hs, hops = draw(path_strategy())
     ch = draw(st.integers(min_value=0, max_value=255))
     mac = draw(st.binary(min_size=2, max_size=2))
-    ct_len = draw(st.integers(min_value=0, max_value=64))
+    ct_len = draw(st.integers(min_value=16, max_value=64).filter(lambda n: n % 16 == 0))
     ct = draw(st.binary(min_size=ct_len, max_size=ct_len))
 
     hdr = bytes([mc_header(ptype, route_type)])
@@ -220,7 +220,7 @@ def invalid_packet(draw):
         pkt, _ = draw(valid_ack_packet())
         cut = draw(st.integers(min_value=0, max_value=max(0, len(pkt) - 2)))
         packet = pkt[:cut]
-        if len(packet) < 2:
+        if len(packet) < 3:
             error = "too_short"
         else:
             error = "bad_framing"
@@ -230,12 +230,18 @@ def invalid_packet(draw):
         ptype = draw(st.sampled_from(list(PAYLOAD_TYPES.keys())))
         hdr = bytes([mc_header(ptype, route_type)])
         # path_len claiming huge path
-        bad_pl = draw(st.integers(min_value=0xC0, max_value=0xFF))
+        # Use hash_size_code 3 (reserved, 0xC0-0xFF) or valid codes with huge counts
+        bad_pl = draw(st.sampled_from([
+            *range(0xC0, 0x100),  # reserved hash_size_code 3
+            0x3F,  # 63 hops × 1 byte = 63 (valid encoding, will overflow data)
+            0x60,  # 32 hops × 2 bytes = 64 (valid encoding, will overflow data)
+            0x95,  # 21 hops × 3 bytes = 63 (valid encoding, will overflow data)
+        ]))
         tail = draw(st.binary(min_size=1, max_size=20))
         packet = hdr + bytes([bad_pl]) + tail
         error = "bad_framing"
     else:  # random
-        packet = draw(st.binary(min_size=2, max_size=50))
+        packet = draw(st.binary(min_size=3, max_size=50))
         error = "not_meshcore"
 
     header = packet[0] if packet else 0

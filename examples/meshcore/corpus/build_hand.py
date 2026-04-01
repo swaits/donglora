@@ -458,6 +458,24 @@ write_case("trace_basic", {
     }
 })
 
+# TRACE: flags=2 means hash_size=4 (power of 2 encoding: 1 << 2 = 4)
+write_case("trace_4byte_hash", {
+    "description": "TRACE flood with 4-byte trace hashes (flags=0x02, hash_size=4)",
+    "tags": ["trace", "flood", "4byte_hash"],
+    "packet_hex": trace_packet(
+        0xAABBCCDD, 0x11223344, 0x02, b"\xde\xad\xbe\xef\xca\xfe\xba\xbe"
+    ).hex(),
+    "valid": True,
+    "expected": {
+        "route_type": "flood",
+        "payload_type": "TRACE",
+        "payload_ver": 0,
+        "transport_codes": None,
+        "path": {"hash_size": 1, "hops": []},
+        "payload": {"trace_tag": 0xAABBCCDD, "trace_hops": 2}
+    }
+})
+
 # MULTIPART: ACK inner type
 write_case("multipart_ack", {
     "description": "MULTIPART flood, remaining=3, inner type=ACK",
@@ -513,29 +531,26 @@ write_case("path_3byte_hash", {
     }
 })
 
-# PATH: 4-byte hash, 1 hop
+# PATH: 4-byte hash (hash_size_code 3 = RESERVED, must be rejected)
 write_case("path_4byte_hash", {
-    "description": "PATH flood, 1 hop with 4-byte hash",
-    "tags": ["path", "flood", "4byte_hash", "encrypted"],
+    "description": "PATH flood, 4-byte hash (reserved hash_size_code 3, invalid)",
+    "tags": ["invalid", "path", "flood", "4byte_hash", "reserved_hash_size"],
     "packet_hex": peer_packet(
         0x08, 1, 0xe6, 0xe9, b"\x2e\x47", bytes(16),
         path_hops=[b"\xaa\xbb\xcc\xdd"], hash_size=4
     ).hex(),
-    "valid": True,
+    "valid": False,
     "expected": {
         "route_type": "flood",
         "payload_type": "PATH",
-        "payload_ver": 0,
-        "transport_codes": None,
-        "path": {"hash_size": 4, "hops": ["aabbccdd"]},
-        "payload": {"dst": "e6", "src": "e9", "mac": "2e47", "ciphertext_len": 16}
+        "error": "bad_framing"
     }
 })
 
 # ── Invalid packets ───────────────────────────────────────────────
 
 # Too short: 1 byte
-write_case("too_short", {
+write_case("too_short_1byte", {
     "description": "Packet too short (1 byte)",
     "tags": ["invalid", "too_short"],
     "packet_hex": "11",
@@ -547,12 +562,39 @@ write_case("too_short", {
     }
 })
 
-# Bad path_len: claims 33 hops but only 24 bytes remain
-bad_pkt = bytes([mc_header(0x02, 1), 0xe1]) + bytes(24)
-write_case("bad_path_len", {
-    "description": "TXT_MSG flood, path_len claims 33 hops (4B hash) but data is too short",
-    "tags": ["invalid", "bad_framing", "path"],
+# Too short: 2 bytes (need at least 3: header + path_len + 1 byte payload)
+write_case("too_short_2bytes", {
+    "description": "Packet too short (2 bytes, need >= 3)",
+    "tags": ["invalid", "too_short"],
+    "packet_hex": "1100",
+    "valid": False,
+    "expected": {
+        "route_type": "flood",
+        "payload_type": "ADVERT",
+        "error": "too_short"
+    }
+})
+
+# Bad path_len: reserved hash_size_code 3 (bits 6-7 = 0b11)
+bad_pkt = bytes([mc_header(0x02, 1), 0xC1]) + bytes(24)
+write_case("bad_path_len_reserved_hash_size", {
+    "description": "TXT_MSG flood, path_len has reserved hash_size_code 3",
+    "tags": ["invalid", "bad_framing", "path", "reserved_hash_size"],
     "packet_hex": bad_pkt.hex(),
+    "valid": False,
+    "expected": {
+        "route_type": "flood",
+        "payload_type": "TXT_MSG",
+        "error": "bad_framing"
+    }
+})
+
+# Bad path_len: claims 33 hops (2B hash) but only 24 bytes remain
+bad_pkt2 = bytes([mc_header(0x02, 1), 0x61]) + bytes(24)
+write_case("bad_path_len", {
+    "description": "TXT_MSG flood, path_len claims 33 hops (2B hash) but data is too short",
+    "tags": ["invalid", "bad_framing", "path"],
+    "packet_hex": bad_pkt2.hex(),
     "valid": False,
     "expected": {
         "route_type": "flood",

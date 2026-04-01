@@ -58,7 +58,7 @@ def validate_decode(case: dict, path: Path) -> list[str]:
 
     # Run decoder — must not crash
     try:
-        raw_output = decode_meshcore_packet(packet)
+        raw_output, _warnings = decode_meshcore_packet(packet)
     except Exception as e:
         errors.append(f"Decoder crashed: {e}")
         return errors

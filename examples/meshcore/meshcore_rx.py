@@ -514,7 +514,7 @@ PAYLOAD_NAMES = {
     0x0F: "RAW_CUSTOM",
 }
 
-NODE_TYPES = {0x01: "chat", 0x02: "repeater", 0x03: "room", 0x04: "sensor"}
+NODE_TYPES = {0x00: "none", 0x01: "chat", 0x02: "repeater", 0x03: "room", 0x04: "sensor"}
 
 MAX_PATH_SIZE = 64
 
@@ -574,14 +574,18 @@ def _best_name(candidates: list[bytes]) -> bytes:
     return min(candidates, key=lambda d: (_utf8_score(d), -len(d)))
 
 
-def _decode_advert_appdata(app_data: bytes) -> tuple[str, str]:
-    """Decode advert app_data. Returns (display_string, node_name)."""
+def _decode_advert_appdata(app_data: bytes) -> tuple[str, str, list[str]]:
+    """Decode advert app_data. Returns (display_string, node_name, quality_warnings)."""
     if not app_data:
-        return "", ""
+        return "", "", []
     flags = app_data[0]
     node_type = flags & 0x0F
-    node_label = NODE_TYPES.get(node_type, f"type={node_type}")
+    node_label = NODE_TYPES.get(node_type, f"0x{node_type:02x}")
     parts = [f"{DIM}flags={RST}{flags:02x} {DIM}node={RST}{node_label}"]
+    warnings: list[str] = []
+
+    if node_type > 4:
+        warnings.append("bad node_type")
 
     # Parse location if flagged and coords are valid
     off = 1
@@ -614,12 +618,14 @@ def _decode_advert_appdata(app_data: bytes) -> tuple[str, str]:
         if candidates:
             best = _best_name(candidates)
             name = best.decode("utf-8", errors="replace")
+            if "\ufffd" in name:
+                warnings.append("bad UTF-8")
 
     if loc_str:
         parts.append(loc_str)
     if name:
         parts.append(f"{BWHT}{name}{RST}")
-    return " ".join(parts), name
+    return " ".join(parts), name, warnings
 
 
 LOOP_INDENT = " " * 38  # align under decoded packet text (after RSSI/SNR/len)
@@ -673,18 +679,21 @@ def _try_decode_body(
     payload_ver: int,
     route_name: str,
     tc_str: str,
-) -> str | None:
-    """Try to parse path + payload starting at pos. Returns decoded string or None."""
+) -> tuple[str | None, list[str]]:
+    """Try to parse path + payload starting at pos. Returns (decoded_string, warnings) or (None, [])."""
     if pos >= len(data):
-        return None
+        return None, []
     path_len_byte = data[pos]
     pos += 1
-    hash_size = (path_len_byte >> 6) + 1
+    hash_size_code = path_len_byte >> 6
+    if hash_size_code == 3:
+        return None, []  # reserved hash size code per spec Section 3
+    hash_size = hash_size_code + 1
     hop_count = path_len_byte & 0x3F
 
     path_bytes = hop_count * hash_size
     if path_bytes > MAX_PATH_SIZE or pos + path_bytes > len(data):
-        return None
+        return None, []
 
     hops_str = ""
     loop_warn = ""
@@ -700,10 +709,13 @@ def _try_decode_body(
     pos += path_bytes
 
     payload = data[pos:]
+    if not payload or len(payload) > 184:
+        return None, []
     prefix = f"{type_color}{type_name}{RST} {route_name}{tc_str}{hops_str}"
 
+    warnings: list[str] = []
     if payload_type == 0x04:
-        result = _decode_advert(prefix, payload)
+        result, warnings = _decode_advert(prefix, payload)
     elif payload_type == 0x03:
         result = _decode_ack(prefix, payload)
     elif payload_type in (0x00, 0x01, 0x02, 0x08):
@@ -721,17 +733,17 @@ def _try_decode_body(
     else:
         result = f"{prefix} {DIM}{payload.hex()}{RST}" if payload else prefix
 
-    return result + loop_warn
+    return result + loop_warn, warnings
 
 
-def decode_meshcore_packet(data: bytes) -> str:
-    """Decode a MeshCore packet into a human-readable string."""
-    if len(data) < 2:
-        return f"{RED}<too short>{RST} {DIM}{data.hex()}{RST}"
+def decode_meshcore_packet(data: bytes) -> tuple[str, list[str]]:
+    """Decode a MeshCore packet. Returns (display_string, quality_warnings)."""
+    if len(data) < 3:
+        return f"{RED}<too short>{RST} {DIM}{data.hex()}{RST}", []
 
     header = data[0]
     if header == 0xFF:
-        return f"{DIM}<no-retransmit marker> {data[1:].hex()}{RST}"
+        return f"{DIM}<no-retransmit marker> {data[1:].hex()}{RST}", []
 
     route_type = header & 0x03
     payload_type = (header >> 2) & 0x0F
@@ -740,11 +752,10 @@ def decode_meshcore_packet(data: bytes) -> str:
     # MeshCore only implements PAYLOAD_VER_1 (0x00) — versions 1-3 are reserved
     # and rejected by real nodes. Packets with ver > 0 are noise or non-MeshCore.
     if payload_ver != 0:
-        route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
-        type_name = PAYLOAD_NAMES.get(payload_type, f"0x{payload_type:02x}")
         return (
             f"{RED}<not meshcore>{RST} {DIM}hdr=0x{header:02x} "
-            f"(ver={payload_ver} — only v0 exists) {data[1:].hex()}{RST}"
+            f"(ver={payload_ver} — only v0 exists) {data[1:].hex()}{RST}",
+            [],
         )
 
     route_name = ROUTE_NAMES.get(route_type, f"rt{route_type}")
@@ -757,7 +768,7 @@ def decode_meshcore_packet(data: bytes) -> str:
     if has_tc and len(data) >= 6:
         tc1, tc2 = struct.unpack_from("<HH", data, 1)
         tc_str = f" {DIM}tc={tc1:04x}:{tc2:04x}{RST}"
-        result = _try_decode_body(
+        result, warnings = _try_decode_body(
             data,
             5,
             type_name,
@@ -768,42 +779,49 @@ def decode_meshcore_packet(data: bytes) -> str:
             tc_str,
         )
         if result is not None:
-            return result
+            return result, warnings
         # TC parse failed — retry without (older firmware compatibility)
-        result = _try_decode_body(
+        result, warnings = _try_decode_body(
             data, 1, type_name, type_color, payload_type, payload_ver, route_name, ""
         )
         if result is not None:
-            return result
+            return result, warnings
     else:
-        result = _try_decode_body(
+        result, warnings = _try_decode_body(
             data, 1, type_name, type_color, payload_type, payload_ver, route_name, ""
         )
         if result is not None:
-            return result
+            return result, warnings
 
     # Both attempts failed — show what we know from the header
     return (
         f"{RED}<bad framing>{RST} {type_color}{type_name}{RST} "
-        f"{route_name} {DIM}{data[1:].hex()}{RST}"
+        f"{route_name} {DIM}{data[1:].hex()}{RST}",
+        [],
     )
 
 
-def _decode_advert(prefix: str, payload: bytes) -> str:
+def _decode_advert(prefix: str, payload: bytes) -> tuple[str, list[str]]:
     if len(payload) < 100:
-        return f"{prefix} {RED}<bad advert: {len(payload)}B, need >=100>{RST} {DIM}{payload.hex()}{RST}"
+        return f"{prefix} {RED}<bad advert: {len(payload)}B, need >=100>{RST} {DIM}{payload.hex()}{RST}", []
     pubkey = payload[0:32]
     timestamp = struct.unpack_from("<I", payload, 32)[0]
     app_data = payload[100:]
+    warnings: list[str] = []
     try:
         ts = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
+        if timestamp > time.time() + 3600:
+            warnings.append("future ts")
     except (OSError, OverflowError, ValueError):
         ts = f"epoch={timestamp}"
-    app_str, name = _decode_advert_appdata(app_data)
-    _register_node(pubkey, name)
-    return f"{prefix} {DIM}pub={RST}{pubkey[:4].hex()}.. {DIM}ts={RST}{ts}Z {app_str}"
+        warnings.append("bad ts")
+    app_str, name, app_warnings = _decode_advert_appdata(app_data)
+    warnings.extend(app_warnings)
+    if not warnings:
+        _register_node(pubkey, name)
+    return f"{prefix} {DIM}pub={RST}{pubkey[:4].hex()}.. {DIM}ts={RST}{ts}Z {app_str}", warnings
 
 
 def _decode_ack(prefix: str, payload: bytes) -> str:
@@ -816,7 +834,7 @@ def _decode_ack(prefix: str, payload: bytes) -> str:
 
 
 def _decode_encrypted_peer(prefix: str, type_name: str, payload: bytes) -> str:
-    if len(payload) < 4:
+    if len(payload) < 20:
         return f"{prefix} {RED}<bad {type_name}: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
     dst = payload[0]
     src = payload[1]
@@ -826,7 +844,7 @@ def _decode_encrypted_peer(prefix: str, type_name: str, payload: bytes) -> str:
 
 
 def _decode_encrypted_group(prefix: str, payload: bytes) -> str:
-    if len(payload) < 3:
+    if len(payload) < 19:
         return (
             f"{prefix} {RED}<bad group: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
         )
@@ -865,7 +883,7 @@ def _decode_encrypted_group(prefix: str, payload: bytes) -> str:
 
 
 def _decode_anon_req(prefix: str, payload: bytes) -> str:
-    if len(payload) < 35:
+    if len(payload) < 51:
         return f"{prefix} {RED}<bad anon_req: {len(payload)}B>{RST} {DIM}{payload.hex()}{RST}"
     dst = payload[0]
     ephem_pub = payload[1:33]
@@ -881,7 +899,7 @@ def _decode_trace(prefix: str, payload: bytes) -> str:
         )
     tag = struct.unpack_from("<I", payload, 0)[0]
     flags = payload[8]
-    trace_hash_size = (flags & 0x03) + 1
+    trace_hash_size = 1 << (flags & 0x03)
     trace_hashes = payload[9:]
     n_hashes = len(trace_hashes) // trace_hash_size if trace_hash_size else 0
     hops = []
@@ -893,8 +911,8 @@ def _decode_trace(prefix: str, payload: bytes) -> str:
 
 
 def _decode_multipart(prefix: str, payload: bytes) -> str:
-    if len(payload) < 1:
-        return f"{prefix} {RED}<empty multipart>{RST}"
+    if len(payload) < 2:
+        return f"{prefix} {RED}<bad multipart: {len(payload)}B>{RST}"
     remaining = (payload[0] >> 4) & 0x0F
     inner_type = payload[0] & 0x0F
     inner_name = PAYLOAD_NAMES.get(inner_type, f"0x{inner_type:02x}")
@@ -1019,9 +1037,17 @@ def configure_and_listen(ser: serial.Serial):
                 last_activity = time.monotonic()
 
                 payload = resp["payload"]
-                decoded = decode_meshcore_packet(payload)
-                rssi_snr = _format_rssi_snr(resp["rssi"], resp["snr"])
-                print(f"  {rssi_snr}  {DIM}len:{len(payload):3d}{RST}  {decoded}")
+                decoded, warnings = decode_meshcore_packet(payload)
+                snr = resp["snr"]
+                # SNR below LoRa demodulation floor is one quality signal
+                sf = RADIO_CONFIG["sf"]
+                if -32 <= snr <= 32 and snr < -2.5 * (sf - 4):
+                    warnings.append("low SNR")
+                warn_tag = ""
+                if warnings:
+                    warn_tag = f"  {BYEL}[{', '.join(warnings)}]{RST}"
+                rssi_snr = _format_rssi_snr(resp["rssi"], snr)
+                print(f"  {rssi_snr}  {DIM}len:{len(payload):3d}{RST}  {decoded}{warn_tag}")
         except Exception:
             pass
 
