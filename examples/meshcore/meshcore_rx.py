@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 """DongLoRa MeshCore receiver: decode and display MeshCore packets."""
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["cobs", "pyserial", "pycryptodome"]
-# ///
-
 import base64
 import csv
-import glob
+import donglora as dl
 import hashlib
 import hmac
 import json
@@ -16,7 +11,6 @@ import serial
 import sys
 import tempfile
 import time
-from cobs import cobs
 from Crypto.Cipher import AES
 from datetime import datetime, timezone
 from pathlib import Path
@@ -204,12 +198,12 @@ def _grp_transmit(ser, channel_name: str, sender: str, text: str):
     payload = _grp_encrypt(secret, sender, text)
     packet = _grp_build_packet(payload)
     try:
-        send_cmd(ser, {"type": "Transmit", "payload": packet}, quiet=True)
+        send_cmd(ser, "Transmit", quiet=True, payload=packet)
     except Exception:
         pass
     # Always try to resume RX, even if TX failed
     try:
-        send_cmd(ser, {"type": "StartRx"}, quiet=True)
+        send_cmd(ser, "StartRx", quiet=True)
     except Exception:
         pass
 
@@ -349,149 +343,7 @@ class LoopAggregator:
 _aggregator = LoopAggregator()
 
 
-# Open-source VID 1209, PID "WA" (0x5741)
-USB_VID_PID = "1209:5741"
 
-
-def find_serial_port() -> str | None:
-    """Find the serial port for our USB device."""
-    import subprocess
-
-    # Try to find by USB VID:PID
-    for path in sorted(glob.glob("/dev/ttyACM*")) + sorted(glob.glob("/dev/ttyUSB*")):
-        try:
-            result = subprocess.run(
-                ["udevadm", "info", "--query=property", f"--name={path}"],
-                capture_output=True,
-                text=True,
-                timeout=2,
-            )
-            vid = ""
-            pid = ""
-            for line in result.stdout.splitlines():
-                if line.startswith("ID_VENDOR_ID="):
-                    vid = line.split("=", 1)[1].lower()
-                elif line.startswith("ID_MODEL_ID="):
-                    pid = line.split("=", 1)[1].lower()
-            if f"{vid}:{pid}" == USB_VID_PID:
-                return path
-        except Exception:
-            continue
-
-    # Fallback: first ttyACM device
-    ports = sorted(glob.glob("/dev/ttyACM*"))
-    return ports[0] if ports else None
-
-
-def wait_for_device() -> str:
-    """Poll until the USB device appears."""
-    print(f"  {DIM}Waiting for DongLoRa...{RST}", end="", flush=True)
-    while True:
-        port = find_serial_port()
-        if port:
-            print(f" {GRN}{port}{RST}")
-            time.sleep(0.3)  # let the device settle
-            return port
-        print(f"{DIM}.{RST}", end="", flush=True)
-        time.sleep(0.5)
-
-
-def open_serial(port: str) -> serial.Serial:
-    return serial.Serial(port, timeout=2)
-
-
-# ── COBS framing ───────────────────────────────────────────────────
-
-
-def cobs_frame(payload: bytes) -> bytes:
-    return cobs.encode(payload) + b"\x00"
-
-
-def read_frame(ser: serial.Serial) -> bytes | None:
-    buf = b""
-    while True:
-        b = ser.read(1)
-        if not b:
-            return None
-        if b == b"\x00":
-            break
-        buf += b
-    if not buf:
-        return None
-    try:
-        return cobs.decode(buf)
-    except cobs.DecodeError:
-        return None
-
-
-# ── Fixed-size LE serialization ────────────────────────────────────
-
-
-def encode_radio_config(cfg: dict) -> bytes:
-    """Encode RadioConfig to 10 fixed-size LE bytes."""
-    return struct.pack(
-        "<IBBBHB",
-        cfg["freq_hz"],
-        cfg["bw"],
-        cfg["sf"],
-        cfg["cr"],
-        cfg["sync_word"],
-        cfg["tx_power_dbm"] & 0xFF,
-    )
-
-
-def encode_command(cmd: dict) -> bytes:
-    """Encode a command dict to fixed-size LE bytes."""
-    kind = cmd["type"]
-    tags = {
-        "Ping": 0,
-        "GetConfig": 1,
-        "SetConfig": 2,
-        "StartRx": 3,
-        "StopRx": 4,
-        "Transmit": 5,
-        "DisplayOn": 6,
-        "DisplayOff": 7,
-    }
-    out = bytes([tags[kind]])
-    if kind == "SetConfig":
-        out += encode_radio_config(cmd["config"])
-    elif kind == "Transmit":
-        config = cmd.get("config")
-        if config is None:
-            out += b"\x00"
-        else:
-            out += b"\x01" + encode_radio_config(config)
-        payload = cmd["payload"]
-        out += struct.pack("<H", len(payload)) + payload
-    return out
-
-
-def decode_response(data: bytes) -> dict:
-    """Decode a fixed-size LE response."""
-    if not data:
-        return {"type": "Empty"}
-    tag = data[0]
-    rest = data[1:]
-    if tag == 0:
-        return {"type": "Pong"}
-    elif tag == 1:
-        return {"type": "Config", "raw": rest.hex()}
-    elif tag == 2:
-        rssi = struct.unpack_from("<h", rest, 0)[0]
-        snr = struct.unpack_from("<h", rest, 2)[0]
-        plen = struct.unpack_from("<H", rest, 4)[0]
-        payload = rest[6 : 6 + plen]
-        return {"type": "RxPacket", "rssi": rssi, "snr": snr, "payload": payload}
-    elif tag == 3:
-        return {"type": "TxDone"}
-    elif tag == 4:
-        return {"type": "Ok"}
-    elif tag == 5:
-        code = rest[0] if rest else -1
-        return {"type": "Error", "code": code}
-    else:
-        return {"type": f"Unknown({tag})", "raw": rest.hex()}
 
 
 # ── MeshCore packet decoder ──────────────────────────────────────
@@ -956,19 +808,18 @@ def _format_response(resp: dict) -> str:
     return t
 
 
-def send_cmd(ser: serial.Serial, cmd: dict, label: str = "", quiet: bool = False) -> dict | None:
-    payload = encode_command(cmd)
-    frame = cobs_frame(payload)
+def send_cmd(ser, cmd_name: str, label: str = "", quiet: bool = False, **kwargs) -> dict | None:
+    frame = dl.cobs_encode(dl.encode_command(cmd_name, **kwargs))
     if not quiet:
         print(f"  {DIM}>>>{RST} {label}")
     ser.write(frame)
     ser.flush()
-    resp_data = read_frame(ser)
+    resp_data = dl.read_frame(ser)
     if resp_data is None:
         if not quiet:
             print(f"  {DIM}<<<{RST} {YEL}timeout{RST}")
         return None
-    resp = decode_response(resp_data)
+    resp = dl.decode_response(resp_data)
     if not quiet:
         print(f"  {DIM}<<<{RST} {_format_response(resp)}")
     return resp
@@ -981,6 +832,8 @@ RADIO_CONFIG = {
     "cr": 5,  # CR 4/5 — denominator value
     "sync_word": 0x3444,
     "tx_power_dbm": -128,  # TX_POWER_MAX: use board's maximum
+    "preamble_len": 0,     # firmware default (16)
+    "cad": 1,              # CAD on
 }
 
 
@@ -997,14 +850,10 @@ def _format_rssi_snr(rssi: int, snr: int) -> str:
 DISPLAY_IDLE_TIMEOUT = 90  # seconds — turn display off when no activity
 
 
-def configure_and_listen(ser: serial.Serial):
-    send_cmd(ser, {"type": "Ping"}, "Ping")
-    send_cmd(
-        ser,
-        {"type": "SetConfig", "config": RADIO_CONFIG},
-        "SetConfig 910.525/62.5k/SF7/CR4/5",
-    )
-    send_cmd(ser, {"type": "StartRx"}, "StartRx")
+def configure_and_listen(ser):
+    send_cmd(ser, "Ping", "Ping")
+    send_cmd(ser, "SetConfig", "SetConfig 910.525/62.5k/SF7/CR4/5", config=RADIO_CONFIG)
+    send_cmd(ser, "StartRx", "StartRx")
 
     print(f"\n  {BWHT}Listening{RST} {DIM}(Ctrl+C to stop){RST}\n")
     ser.timeout = 1
@@ -1021,18 +870,18 @@ def configure_and_listen(ser: serial.Serial):
         # Auto-off display after idle timeout
         now = time.monotonic()
         if not display_off and now - last_activity > DISPLAY_IDLE_TIMEOUT:
-            send_cmd(ser, {"type": "DisplayOff"}, quiet=True)
+            send_cmd(ser, "DisplayOff", quiet=True)
             display_off = True
 
-        data = read_frame(ser)
+        data = dl.read_frame(ser)
         if data is None:
             continue
         try:
-            resp = decode_response(data)
+            resp = dl.decode_response(data)
             if resp["type"] == "RxPacket":
                 # Wake display on activity
                 if display_off:
-                    send_cmd(ser, {"type": "DisplayOn"}, quiet=True)
+                    send_cmd(ser, "DisplayOn", quiet=True)
                     display_off = False
                 last_activity = time.monotonic()
 
@@ -1061,24 +910,18 @@ def main():
     port = sys.argv[1] if len(sys.argv) > 1 else None
 
     while True:
-        if port is None:
-            port = wait_for_device()
-
         try:
-            print(f"  {DIM}Opening{RST} {GRN}{port}{RST}")
-            ser = open_serial(port)
-            ser.reset_input_buffer()
+            ser = dl.connect(port)
             configure_and_listen(ser)
         except (serial.SerialException, ConnectionError, OSError) as e:
             print(f"\n  {RED}Disconnected: {e}{RST}")
             print(f"  {DIM}Reconnecting when device reappears...{RST}")
-            port = None
             time.sleep(1)
         except KeyboardInterrupt:
             print()
             try:
                 ser.timeout = 2
-                send_cmd(ser, {"type": "StopRx"}, "StopRx")
+                send_cmd(ser, "StopRx", "StopRx")
             except Exception:
                 pass
             break

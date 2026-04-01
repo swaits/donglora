@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Config validation against per-board hardware limits
 - `TX_POWER_MAX` sentinel (`-128`): auto-use the board's maximum TX power
 - Board support: Heltec V3, Heltec V4, RAK WisBlock 4631
-- Example: MeshCore packet decoder with group channel decryption
+- Python host library (`clients/python/`) with `pip install` and `donglora-mux` CLI
+- USB multiplexer for sharing one dongle with multiple applications
+- Two-way LoRa bridge over TCP (`examples/lora_bridge.py`)
 
 ### Technical
 

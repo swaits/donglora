@@ -7,21 +7,16 @@ Architecture:
 
 Usage:
     # Machine A (server):
-    uv run examples/lora_bridge.py --mode server --port 9100
+    python examples/lora_bridge.py --mode server --port 9100
 
     # Machine B (client):
-    uv run examples/lora_bridge.py --mode client --host machineA --port 9100
+    python examples/lora_bridge.py --mode client --host machineA --port 9100
 
 Both sides:
     - Open local DongLoRa, configure radio, start RX
     - Forward received LoRa packets -> TCP -> remote side -> TX
     - Bidirectional: both sides receive AND transmit
 """
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["cobs", "pyserial"]
-# ///
-
 import argparse
 import serial
 import socket
@@ -30,8 +25,7 @@ import sys
 import threading
 import time
 
-sys.path.insert(0, __import__("pathlib").Path(__file__).parent.as_posix())
-import donglora as dl  # noqa: E402
+import donglora as dl
 
 
 def tcp_send(sock: socket.socket, payload: bytes):
@@ -59,12 +53,16 @@ def tcp_recv(sock: socket.socket) -> bytes | None:
     return data
 
 
+_ser_lock = threading.Lock()
+
+
 def radio_to_tcp(ser: serial.Serial, sock: socket.socket):
     """Thread: forward LoRa RX packets to TCP."""
     ser.timeout = 1
     while True:
         try:
-            data = dl.read_frame(ser)
+            with _ser_lock:
+                data = dl.read_frame(ser)
             if data is None:
                 continue
             resp = dl.decode_response(data)
@@ -86,7 +84,8 @@ def tcp_to_radio(ser: serial.Serial, sock: socket.socket):
                 print("  [TCP disconnected]")
                 break
             print(f"  TCP→TX  len:{len(payload):3d}")
-            dl.send(ser, "Transmit", payload=payload)
+            with _ser_lock:
+                dl.send(ser, "Transmit", payload=payload)
         except (serial.SerialException, OSError) as e:
             print(f"  [tcp→radio error: {e}]")
             break

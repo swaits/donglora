@@ -2,21 +2,17 @@
 """Two-dongle demo: one transmits, one receives.
 
 Usage:
-    uv run examples/ping_pong.py --role tx [PORT]
-    uv run examples/ping_pong.py --role rx [PORT]
+    python examples/ping_pong.py --role tx [PORT]
+    python examples/ping_pong.py --role rx [PORT]
 """
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["cobs", "pyserial"]
-# ///
 
 import argparse
-import serial
 import sys
 import time
 
-sys.path.insert(0, __import__("pathlib").Path(__file__).parent.as_posix())
-import donglora as dl  # noqa: E402
+import serial
+
+import donglora as dl
 
 parser = argparse.ArgumentParser(description="DongLoRa ping-pong demo")
 parser.add_argument("--role", choices=["tx", "rx"], required=True)

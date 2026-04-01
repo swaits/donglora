@@ -12,8 +12,10 @@ MeshCore is one of many possible protocols you can run over it.
 
 ## Usage
 
+From the `examples/` directory:
+
 ```sh
-uv run examples/meshcore/meshcore_rx.py [PORT]
+just meshcore [PORT]
 ```
 
 Connects to a DongLoRa device, configures the radio for the MeshCore
@@ -21,6 +23,8 @@ frequency/modulation, and decodes received packets in real time.
 
 ## Running the test corpus
 
+From the `examples/` directory:
+
 ```sh
-uv run examples/meshcore/corpus/validate.py
+uv run --extra meshcore meshcore/corpus/validate.py
 ```

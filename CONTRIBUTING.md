@@ -4,10 +4,10 @@
 
 DongLoRa is designed to make adding new boards easy:
 
-1. Create `src/board/your_board.rs` implementing the `init()` function
-2. Add a Cargo feature in `Cargo.toml` with the board's dependencies
+1. Create `firmware/src/board/your_board.rs` implementing the `init()` function
+2. Add a Cargo feature in `firmware/Cargo.toml` with the board's dependencies
 3. Add the board's feature/target/chip to the `justfile` boards list
-4. `build.rs` auto-discovers the new file and generates the module selector
+4. `firmware/build.rs` auto-discovers the new file and generates the module selector
 
 See existing board files (`heltec_v3.rs`, `rak_wisblock_4631.rs`) as templates.
 Each board file owns all hardware init and returns peripheral bundles that the
@@ -20,17 +20,32 @@ common tasks consume. No shared board code — each board is self-contained.
 - **Display rendering uses `.ok()`.** Drawing is best-effort; display errors are not recoverable.
 - **Every `let _ =` gets an inline comment** explaining why the result is discarded.
 
+## Client Libraries
+
+The Python library (`clients/python/`)
+is the reference implementation. To add a library in another language:
+
+1. Create a directory with the language's standard project layout
+2. Implement the wire protocol from [firmware/PROTOCOL.md](firmware/PROTOCOL.md)
+3. Include device discovery (USB VID `1209`, PID `5741`)
+4. Include COBS framing, command encoding, and response decoding
+5. Add a mux client (connect to the mux daemon's Unix socket or TCP)
+
+The protocol is intentionally simple — 8 commands, 7 responses, fixed-size LE.
+A minimal client library should be implementable in a weekend.
+
 ## Building and Testing
 
 ```sh
-just setup         # Install all tools and toolchains (one-time)
-just check-all     # Compile-check all boards
-just build-all     # Build release firmware for all boards
+cd firmware
+just check-all      # Compile-check all boards
+just build-all      # Build release firmware for all boards
 just clippy <board> # Lint a specific board
+just test           # Host-side protocol unit tests
 ```
 
-Tool versions (espup, espflash, probe-rs) are pinned in `mise.toml`.
-`just setup` installs everything; individual commands also auto-install as needed.
+Tool versions are pinned in each project's `mise.toml`.
+Tools are installed automatically on first run.
 
 ## Commits
 

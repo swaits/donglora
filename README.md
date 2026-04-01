@@ -3,17 +3,38 @@
 **/ˈdɒŋ.ɡəl.ɔːr.ə/** — a [portmanteau](https://en.wikipedia.org/wiki/Portmanteau) of **dongle** and **LoRa**.
 
 Transparent LoRa radio over USB. Plug in a supported board, talk LoRa
-from your host. The firmware is a dumb pipe — it exposes clean LoRa
-parameters (frequency, bandwidth, spreading factor, coding rate, TX power)
-and gets out of the way. No mesh logic, no protocol opinions, no config files.
+from your host in any language that can open a serial port.
+
+The firmware is a dumb pipe — it exposes clean LoRa parameters (frequency,
+bandwidth, spreading factor, coding rate, TX power) and gets out of the way.
+No mesh logic, no protocol opinions, no config files.
+
+## How It Works
+
+```
+Your code ──► client library ──► USB serial ──► firmware ──► LoRa radio
+                                     or
+Your code ──► client library ──► mux daemon ──► USB serial ──► firmware ──► LoRa radio
+```
+
+Four components, each self-contained with its own dependencies and tooling:
+
+| Component | What it is | Language |
+|-----------|-----------|----------|
+| **[firmware/](firmware/)** | Embedded firmware flashed onto a LoRa board. Speaks a simple [binary protocol](firmware/PROTOCOL.md) over USB. | Rust |
+| **[clients/](clients/)** | Client libraries that handle device discovery, COBS framing, and protocol encoding/decoding. This is what your code imports. | Python (reference) |
+| **[mux/](mux/)** | Optional daemon that lets multiple applications share one dongle. Owns the USB port, exposes a Unix socket (and optional TCP). | Python |
+| **[examples/](examples/)** | Ready-to-run scripts demonstrating the client library — receive, transmit, bridge, MeshCore decoder, AI bot. | Python |
+
+The client library can talk directly to the firmware over USB, or connect
+through the mux when multiple applications need the same dongle.
 
 ## Quick Start
 
 1. Get a [supported board](#supported-boards)
-2. `just setup` (installs all tools and toolchains)
-3. `just flash heltec_v4`
-4. `just ex rx`
-5. See packets
+2. `cd firmware && just flash heltec_v4`
+3. `cd examples && just rx`
+4. See packets
 
 ## Supported Boards
 
@@ -23,27 +44,19 @@ and gets out of the way. No mesh logic, no protocol opinions, no config files.
 | Heltec V4 | ESP32-S3 | SX1262 | SSD1315 OLED |
 | RAK WisBlock 4631 | nRF52840 | SX1262 | SSD1306 OLED (optional) |
 
-## Protocol
-
-DongLoRa speaks a binary protocol over USB CDC-ACM: COBS-framed,
-fixed-size little-endian messages. 8 commands, 6 response types —
-everything you need to configure the radio, transmit, and receive.
-
-See **[docs/PROTOCOL.md](docs/PROTOCOL.md)** for the complete wire format
-specification with worked examples.
-
 ## Examples
 
-Python dependencies are handled automatically — just run:
+From `examples/`, dependencies are handled automatically:
 
 ```sh
-just ex rx                     # receive packets
-just ex tx                     # transmit a packet
-just ex ping-pong --role tx    # two-dongle ping-pong demo
-just ex test-commands          # exercise all DongLoRa commands
-just ex bridge --mode server   # LoRa bridge over TCP
-just ex meshcore               # MeshCore packet decoder
-just ex run simple_rx          # run any example by name
+just rx                     # receive packets
+just tx                     # transmit a packet
+just ping-pong --role tx    # two-dongle ping-pong demo
+just test-commands          # exercise all DongLoRa commands
+just bridge --mode server   # LoRa bridge over TCP
+just meshcore               # MeshCore packet decoder
+just orac                   # MeshCore AI bot (needs ANTHROPIC_API_KEY)
+just telemetry              # MeshCore repeater telemetry monitor
 ```
 
 | Script | Description |
@@ -51,26 +64,65 @@ just ex run simple_rx          # run any example by name
 | [`simple_rx.py`](examples/simple_rx.py) | Configure radio, receive and print packets |
 | [`simple_tx.py`](examples/simple_tx.py) | Transmit a single packet |
 | [`ping_pong.py`](examples/ping_pong.py) | Two-dongle demo (`--role tx` / `--role rx`) |
-| [`all_commands.py`](examples/all_commands.py) | Exercise all 8 commands (Ping, SetConfig, GetConfig, StartRx, StopRx, Transmit, DisplayOn/Off) |
+| [`all_commands.py`](examples/all_commands.py) | Exercise all 9 commands |
 | [`lora_bridge.py`](examples/lora_bridge.py) | Two-way LoRa bridge over TCP (works over Tailscale, WireGuard, etc.) |
-| [`meshcore/`](examples/meshcore/) | Full MeshCore packet decoder (advanced example) |
+| [`meshcore/`](examples/meshcore/) | Full MeshCore packet decoder, AI bot, telemetry monitor |
 
 ## Building
 
-Requires [just](https://github.com/casey/just), [mise](https://mise.jdx.dev/), and Rust.
+Requires [just](https://github.com/casey/just) and [mise](https://mise.jdx.dev/).
+Everything else is installed automatically on first run.
 
 ```sh
-just setup              # install all tools and toolchains (one-time)
-just build-all          # build firmware for all boards
+cd firmware
 just build heltec_v4    # build a specific board
-just check-all          # compile-check only (no firmware output)
+just build-all          # build firmware for all boards
 just flash heltec_v4    # build + flash
+just check-all          # compile-check only
 just clippy heltec_v4   # lint
+just test               # host-side protocol unit tests
 ```
 
-`just setup` handles everything: mise-managed tools (espup, espflash,
-probe-rs), the ESP Xtensa toolchain, nightly rust-src, and ARM targets.
-Individual build commands will also auto-install missing tools as needed.
+## Roadmap
+
+### Now: Solidify the Foundation
+
+- [ ] Test on more boards (Heltec V2, T-Beam Supreme, T-Echo, RAK 3112)
+- [ ] Python client library on PyPI — the existing library, properly packaged
+- [ ] CI for all boards — automated build/clippy/size-check on every commit
+- [ ] Protocol documentation polish
+
+### Next: Cross-Language Client Libraries
+
+The protocol is 8 commands over COBS-framed LE. Any language that can
+open a serial port can speak DongLoRa.
+
+- [ ] **Rust** crate — async, tokio-native, zero-copy COBS
+- [ ] **Go** module — goroutine-friendly, cross-platform
+- [ ] **C** library — `libdonglora` for FFI from any language
+- [ ] **Ruby** gem — simple protocol, weekend gem, new community
+- [ ] **Python** on PyPI — type hints and async support
+
+### Then: Infrastructure and Tooling
+
+- [ ] Cross-platform mux daemon rewritten in Rust (single static binary, no Python required)
+- [ ] `donglora-ctl` CLI — ping, configure, receive, transmit, scan frequencies. Think `ip link` for LoRa.
+- [ ] Protocol versioning — version handshake so client libraries can detect firmware capabilities
+- [ ] Firmware OTA over USB — field-upgradeable without a flash tool
+
+### Future: Things That Would Be Amazing
+
+All host-driven, firmware stays dumb. Every item passes the pipe test.
+
+- [ ] **Spectrum analyzer** — host sweeps frequencies, radio reports RSSI at each step. Instant RF site survey tool.
+- [ ] **Multi-dongle coordination** — one host, multiple dongles on different frequencies. Frequency-hopping, parallel monitoring, diversity reception — all host-driven.
+- [ ] **LoRa packet capture** — PCAP-NG with a LoRa link type. Wireshark dissectors. Record, replay, analyze LoRa traffic with standard tools.
+- [ ] **Time-synchronized RX** — "start RX at T, stop at T+N" for precise duty-cycle control and TDMA-style protocols. Firmware just follows the schedule.
+- [ ] **Raw IQ streaming** — SDR-lite for LoRa. Demodulation and signal analysis on the host.
+- [ ] **Mesh protocol test harness** — host-side framework for testing any mesh protocol over real radios. Inject packets, measure latency, simulate topology. The dongle is just the radio — test logic lives entirely on the host.
+
+*Have an idea? Open an issue. The protocol is stable and the firmware is
+intentionally boring — the interesting stuff happens on the host.*
 
 <details>
 <summary><strong>Board Roadmap</strong></summary>

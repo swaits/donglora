@@ -2,18 +2,14 @@
 """Transmit a single LoRa packet.
 
 Usage:
-    uv run examples/simple_tx.py [PORT] [MESSAGE]
+    python examples/simple_tx.py [PORT] [MESSAGE]
 """
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["cobs", "pyserial"]
-# ///
 
-import serial
 import sys
 
-sys.path.insert(0, __import__("pathlib").Path(__file__).parent.as_posix())
-import donglora as dl  # noqa: E402
+import serial
+
+import donglora as dl
 
 port = None
 message = "Hello from DongLoRa!"

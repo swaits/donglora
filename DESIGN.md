@@ -105,4 +105,4 @@ keep, but never prematurely.
 | Persistence | None | Always start fresh, true dumb pipe |
 | Board codegen | Jinja2 via build.rs | Auto-discovers boards from filesystem |
 | Rust toolchain | Stock `rustup` (stable/nightly) | No forks; `espup` for Xtensa boards only |
-| Firmware output | `firmware/donglora-{board}-{profile}.elf` | Readable names, not buried in `target/` |
+| Firmware output | `firmware/builds/donglora-{board}-{profile}.elf` | Readable names, not buried in `target/` |

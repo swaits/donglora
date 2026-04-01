@@ -2,18 +2,14 @@
 """Exercise every DongLoRa command to verify the API works.
 
 Usage:
-    uv run examples/all_commands.py [PORT]
+    python examples/all_commands.py [PORT]
 """
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["cobs", "pyserial"]
-# ///
 
-import serial
 import sys
 
-sys.path.insert(0, __import__("pathlib").Path(__file__).parent.as_posix())
-import donglora as dl  # noqa: E402
+import serial
+
+import donglora as dl
 
 try:
     ser = dl.connect(sys.argv[1] if len(sys.argv) > 1 else None)

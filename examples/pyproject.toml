@@ -1,0 +1,19 @@
+[project]
+name = "donglora-examples"
+version = "0.1.0"
+description = "DongLoRa example scripts"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "donglora",
+]
+
+[project.optional-dependencies]
+meshcore = ["donglora[meshcore]"]
+orac = ["donglora[orac]"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+donglora = { path = "../clients/python", editable = true }
