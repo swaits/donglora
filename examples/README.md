@@ -5,6 +5,7 @@ Example scripts demonstrating the [Python client library](../clients/python/).
 ## Running
 
 ```sh
+cd examples
 just rx                     # receive packets
 just tx                     # transmit a packet
 just ping-pong --role tx    # two-dongle ping-pong demo

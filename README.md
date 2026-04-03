@@ -52,9 +52,10 @@ through the mux when multiple applications need the same dongle.
 
 ## Examples
 
-From `examples/`, dependencies are handled automatically:
+Dependencies are handled automatically:
 
 ```sh
+cd examples
 just rx                     # receive packets
 just tx                     # transmit a packet
 just ping-pong --role tx    # two-dongle ping-pong demo
@@ -65,6 +66,21 @@ just orac                   # MeshCore AI bot (needs ANTHROPIC_API_KEY)
 just telemetry              # MeshCore repeater telemetry monitor
 ```
 
+## Multiplexer
+
+To share one dongle across multiple applications, run the mux daemon:
+
+```sh
+cd mux/python
+just run                                    # start the mux daemon
+just verbose                                # start with verbose logging
+just run --tcp 5741 --port /dev/ttyACM0     # with explicit options
+```
+
+The mux owns the USB serial port exclusively and exposes a Unix socket
+(and optional TCP) speaking the same protocol. Client libraries connect
+through it transparently.
+
 | Script | Description |
 |--------|-------------|
 | [`simple_rx.py`](examples/simple_rx.py) | Configure radio, receive and print packets |
@@ -73,6 +89,24 @@ just telemetry              # MeshCore repeater telemetry monitor
 | [`all_commands.py`](examples/all_commands.py) | Exercise all 9 commands |
 | [`lora_bridge.py`](examples/lora_bridge.py) | Two-way LoRa bridge over TCP (works over Tailscale, WireGuard, etc.) |
 | [`meshcore/`](examples/meshcore/) | Full MeshCore packet decoder, AI bot, telemetry monitor |
+
+## Device Permissions (Linux)
+
+Your user needs read/write access to the serial device (`/dev/ttyACM*` or
+`/dev/ttyUSB*`). The cleanest fix is a udev rule:
+
+```sh
+# /etc/udev/rules.d/99-donglora.rules
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="5741", MODE="0666"
+```
+
+Then reload:
+
+```sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+Without this, you'll get permission errors when opening the serial port.
 
 ## Building
 
