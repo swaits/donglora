@@ -30,8 +30,8 @@ Four components, each self-contained with its own dependencies and tooling:
 | Component | What it is | Language |
 |-----------|-----------|----------|
 | **[firmware/](firmware/)** | Embedded firmware flashed onto a LoRa board. Speaks a simple [binary protocol](firmware/PROTOCOL.md) over USB. | Rust |
-| **[clients/](clients/)** | Client libraries that handle device discovery, COBS framing, and protocol encoding/decoding. This is what your code imports. | Python (reference) |
-| **[mux/](mux/)** | Optional daemon that lets multiple applications share one dongle. Owns the USB port, exposes a Unix socket (and optional TCP). | Python |
+| **[clients/](clients/)** | Client libraries that handle device discovery, COBS framing, and protocol encoding/decoding. This is what your code imports. | [Python](clients/python/), [Rust](clients/rust/) |
+| **[mux/](mux/)** | Optional daemon that lets multiple applications share one dongle. Owns the USB port, exposes a Unix socket (and optional TCP). | [Python](mux/python/), [Rust](mux/rust/) |
 | **[examples/](examples/)** | Ready-to-run scripts demonstrating the client library — receive, transmit, bridge, MeshCore decoder, AI bot. | Python |
 
 The client library can talk directly to the firmware over USB, or connect
@@ -73,10 +73,17 @@ just telemetry              # MeshCore repeater telemetry monitor
 To share one dongle across multiple applications, run the mux daemon:
 
 ```sh
+# Python
 cd mux/python
 just run                                    # start the mux daemon
 just verbose                                # start with verbose logging
 just run --tcp 5741 --port /dev/ttyACM0     # with explicit options
+
+# Rust
+cd mux/rust
+just run                                    # start the mux daemon
+just verbose                                # start with verbose logging
+just run -- --tcp 5741 --port /dev/ttyACM0  # with explicit options
 ```
 
 The mux owns the USB serial port exclusively and exposes a Unix socket
@@ -139,7 +146,7 @@ just test               # host-side protocol unit tests
 The protocol is 8 commands over COBS-framed LE. Any language that can
 open a serial port can speak DongLoRa.
 
-- [ ] **Rust** crate — async, tokio-native, zero-copy COBS
+- [x] **Rust** crate — async, tokio-native, zero-copy COBS
 - [ ] **Go** module — goroutine-friendly, cross-platform
 - [ ] **C** library — `libdonglora` for FFI from any language
 - [ ] **Ruby** gem — simple protocol, weekend gem, new community
@@ -147,7 +154,7 @@ open a serial port can speak DongLoRa.
 
 ### Then: Infrastructure and Tooling
 
-- [ ] Cross-platform mux daemon rewritten in Rust (single static binary, no Python required)
+- [x] Cross-platform mux daemon rewritten in Rust (single static binary, no Python required)
 - [ ] `donglora-ctl` CLI — ping, configure, receive, transmit, scan frequencies. Think `ip link` for LoRa.
 - [ ] Protocol versioning — version handshake so client libraries can detect firmware capabilities
 - [ ] Firmware OTA over USB — field-upgradeable without a flash tool

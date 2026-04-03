@@ -22,8 +22,8 @@ common tasks consume. No shared board code — each board is self-contained.
 
 ## Client Libraries
 
-The Python library (`clients/python/`)
-is the reference implementation. To add a library in another language:
+Client libraries exist in [Python](clients/python/) and [Rust](clients/rust/).
+To add a library in another language:
 
 1. Create a directory with the language's standard project layout
 2. Implement the wire protocol from [firmware/PROTOCOL.md](firmware/PROTOCOL.md)
