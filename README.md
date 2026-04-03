@@ -9,6 +9,8 @@ The firmware is a dumb pipe — it exposes clean LoRa parameters (frequency,
 bandwidth, spreading factor, coding rate, TX power) and gets out of the way.
 No mesh logic, no protocol opinions, no config files.
 
+![photograph of firmware running on Heltec V4](./demo.jpg)
+
 ## How It Works
 
 ```
