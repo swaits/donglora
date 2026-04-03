@@ -68,7 +68,27 @@ def radio_to_tcp(ser: serial.Serial, sock: socket.socket):
             resp = dl.decode_response(data)
             if resp["type"] == "RxPacket":
                 payload = resp["payload"]
-                print(f"  RX→TCP  len:{len(payload):3d}  rssi:{resp['rssi']}dBm")
+                snr = resp["snr"]
+                rssi = resp["rssi"]
+                sf = dl.DEFAULT_CONFIG["sf"]
+                min_snr = -2.5 * (sf - 4)
+
+                # Grade per PROTOCOL.md — drop likely-corrupt packets
+                if snr < -32 or snr > 32:
+                    grade = "INVALID"
+                elif snr < min_snr:
+                    grade = "UNRELIABLE"
+                elif snr < min_snr + 3:
+                    grade = "MARGINAL"
+                else:
+                    grade = "GOOD"
+
+                if grade in ("INVALID", "UNRELIABLE"):
+                    print(f"  RX drop len:{len(payload):3d}  rssi:{rssi}dBm  snr:{snr}dB  [{grade}]")
+                    continue
+
+                tag = f"  [{grade}]" if grade == "MARGINAL" else ""
+                print(f"  RX→TCP  len:{len(payload):3d}  rssi:{rssi}dBm  snr:{snr}dB{tag}")
                 tcp_send(sock, payload)
         except (serial.SerialException, OSError) as e:
             print(f"  [radio→tcp error: {e}]")
