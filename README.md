@@ -12,9 +12,15 @@ No mesh logic, no protocol opinions, no config files.
 ## How It Works
 
 ```
+Your code ──► USB serial ──► firmware ──► LoRa radio
+
 Your code ──► client library ──► USB serial ──► firmware ──► LoRa radio
-                                     or
-Your code ──► client library ──► mux daemon ──► USB serial ──► firmware ──► LoRa radio
+
+Your code ──► client library ──┐
+Your code ──► client library ──┤
+              ...              ├──► mux daemon ──► USB serial ──► firmware ──► LoRa radio
+Your code ──► client library ──┤
+Your code ──► client library ──┘
 ```
 
 Four components, each self-contained with its own dependencies and tooling:
