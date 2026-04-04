@@ -2,12 +2,15 @@
 
 **/ˈdɒŋ.ɡəl.ɔːr.ə/** — a [portmanteau](https://en.wikipedia.org/wiki/Portmanteau) of **dongle** and **LoRa**.
 
-Transparent LoRa radio over USB. Plug in a supported board, talk LoRa
-from your host in any language that can open a serial port.
+Transparent LoRa radio over USB. Flash the firmware onto a supported
+board, plug it in, and send/receive LoRa packets from your computer.
+The firmware handles the radio; your code decides what to do with it.
 
-The firmware is a dumb pipe — it exposes clean LoRa parameters (frequency,
-bandwidth, spreading factor, coding rate, TX power) and gets out of the way.
-No mesh logic, no protocol opinions, no config files.
+Any LoRa board becomes a reusable peripheral that works with any host —
+a laptop, a desktop, a Raspberry Pi, a server. The built-in multiplexer
+lets multiple applications share one dongle at the same time, so you can
+run a MeshCore bot, a packet analyzer, and a bridge all on the same
+radio without dedicated hardware for each.
 
 ![photograph of firmware running on Heltec V4](./demo.jpg)
 
