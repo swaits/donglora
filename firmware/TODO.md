@@ -1,4 +1,0 @@
-- LED blinking on TX/RX? colored?
-- publish new client, mux, bridge (updates in client for UART crap)
-- split out mux and client repos
-- move to GH organization
